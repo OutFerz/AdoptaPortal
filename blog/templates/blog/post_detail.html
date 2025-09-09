@@ -1,0 +1,54 @@
+{% extends "blog/base.html" %}
+{% load static %}
+{% block title %}{{ post.title }} - Blog{% endblock %}
+
+{% block content %}
+<article class="detail">
+  {% if post.hero_image %}
+    <img class="hero" src="{{ post.hero_image.url }}" alt="Imagen de {{ post.title }}">
+  {% else %}
+    <img class="hero" src="{% static 'blog/img/default-cat.svg' %}" alt="Gato en adopción">
+  {% endif %}
+
+  <h2 style="margin-top:12px">{{ post.title }}</h2>
+  <div class="meta">
+    {{ post.category.name }} ·
+    {% if post.published_at %}{{ post.published_at|date:"d/m/Y H:i" }}{% else %}Sin fecha{% endif %}
+  </div>
+  <div class="hr"></div>
+
+  <div>{{ post.content|linebreaksbr }}</div>
+
+  {% if post.tags.all %}
+    <div class="tags" style="margin-top:10px">
+      {% for t in post.tags.all %}
+        <a class="tag" href="{% url 'blog:post_list' %}?tag={{ t.slug|urlencode }}">{{ t.name }}</a>
+      {% endfor %}
+    </div>
+  {% endif %}
+</article>
+
+<section class="detail" style="margin-top:16px">
+  <h3>Comentarios</h3>
+  <ul>
+    {% for c in post.comments.all %}
+      <li>
+        <strong>{{ c.name }}</strong>
+        ({{ c.created_at|date:"d/m/Y H:i" }})<br>
+        {{ c.body }}
+      </li>
+    {% empty %}
+      <li>Aún no hay comentarios.</li>
+    {% endfor %}
+  </ul>
+
+  <div class="hr"></div>
+  <form method="post" class="form">
+    {% csrf_token %}
+    <label>Nombre</label>{{ form.name }}
+    <label>Email</label>{{ form.email }}
+    <label>Comentario</label>{{ form.body }}
+    <button class="btn" style="margin-top:8px">Enviar</button>
+  </form>
+</section>
+{% endblock %}

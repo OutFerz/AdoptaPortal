@@ -1,0 +1,52 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ titulo }} - Portal de Mascotas</title>
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <h1 class="logo">Portal de Mascotas</h1>
+            <nav class="nav">
+                <ul class="nav-list">
+                    <li><a href="{% url 'dashboard' %}" class="nav-link">Inicio</a></li>
+                    <li><a href="{% url 'solicitud_adopcion:lista_solicitudes' %}" class="nav-link">Mis Solicitudes</a></li>
+                    <li><a href="{% url 'solicitud_adopcion:crear_solicitud' %}" class="nav-link">Nueva Solicitud</a></li>
+                    <li><a href="{% url 'login:profile' %}" class="nav-link active">Mi Perfil</a></li>
+                    <li><a href="{% url 'login:logout' %}" class="nav-link">Cerrar Sesión</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="container">
+            <section class="profile-section">
+                <h2>Mi Perfil</h2>
+                <div class="profile-info">
+                    <p><strong>Usuario:</strong> {{ usuario.username }}</p>
+                    <p><strong>Email:</strong> {{ usuario.email|default:"No especificado" }}</p>
+                    <p><strong>Nombre:</strong> {{ usuario.first_name|default:"No especificado" }}</p>
+                    <p><strong>Apellido:</strong> {{ usuario.last_name|default:"No especificado" }}</p>
+                    <p><strong>Fecha de registro:</strong> {{ usuario.date_joined|date:"d/m/Y H:i" }}</p>
+                    <p><strong>Último acceso:</strong> {{ usuario.last_login|date:"d/m/Y H:i" }}</p>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p class="footer-text">
+                Portal de Mascotas - Sistema de Gestión de Adopciones
+            </p>
+        </div>
+    </footer>
+
+    <script src="{% static 'js/main.js' %}"></script>
+</body>
+</html>

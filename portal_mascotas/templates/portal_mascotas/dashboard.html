@@ -1,0 +1,86 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ titulo }} - Portal de Mascotas</title>
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <h1 class="logo">{{ titulo }}</h1>
+            <nav class="nav">
+                <ul class="nav-list">
+                    <li><a href="{% url 'solicitud_adopcion:lista_solicitudes' %}" class="nav-link">Mis Solicitudes</a></li>
+                    <li><a href="{% url 'solicitud_adopcion:crear_solicitud' %}" class="nav-link">Nueva Solicitud</a></li>
+                    <li><a href="{% url 'admin:index' %}" class="nav-link">Admin</a></li>
+                </ul>
+            </nav>
+            <div class="user-actions">
+                <span class="user-info">Hola, {{ usuario.username }}</span>
+                <a href="{% url 'login:logout' %}" class="logout-btn">Cerrar Sesión</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="container">
+            <section class="hero">
+                <h2 class="hero-title">¡Bienvenido al Portal de Mascotas!</h2>
+                <p class="hero-description">
+                    Gestiona las solicitudes de adopción de mascotas de manera fácil y eficiente.
+                </p>
+            </section>
+
+            <section class="features">
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">🐕</div>
+                        <h3 class="feature-title">Solicitudes de Adopción</h3>
+                        <p class="feature-description">
+                            Gestiona todas las solicitudes de adopción de mascotas.
+                        </p>
+                        <a href="{% url 'solicitud_adopcion:lista_solicitudes' %}" class="feature-link">
+                            Ver Solicitudes
+                        </a>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">➕</div>
+                        <h3 class="feature-title">Nueva Solicitud</h3>
+                        <p class="feature-description">
+                            Crea una nueva solicitud de adopción.
+                        </p>
+                        <a href="{% url 'solicitud_adopcion:crear_solicitud' %}" class="feature-link">
+                            Crear Solicitud
+                        </a>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">⚙️</div>
+                        <h3 class="feature-title">Administración</h3>
+                        <p class="feature-description">
+                            Accede al panel de administración del sistema.
+                        </p>
+                        <a href="{% url 'admin:index' %}" class="feature-link">
+                            Ir al Admin
+                        </a>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p class="footer-text">
+                Portal de Mascotas - Sistema de Gestión de Adopciones
+            </p>
+        </div>
+    </footer>
+
+    <script src="{% static 'js/main.js' %}"></script>
+</body>
+</html>

@@ -1,0 +1,41 @@
+{% extends "blog/base.html" %}
+{% load static %}
+{% block title %}Blog - Lista{% endblock %}
+
+{% block content %}
+<form method="get" class="search" data-autosubmit>
+  <input type="search" name="q" value="{{ q|default:'' }}" placeholder="Buscar...">
+  <button class="btn">Buscar</button>
+</form>
+
+{% if posts %}
+  <div class="grid" style="margin-top:14px">
+    {% for p in posts %}
+      <article class="card">
+        {% if p.hero_image %}
+          <img src="{{ p.hero_image.url }}" alt="Imagen de {{ p.title }}">
+        {% else %}
+          <img src="{% static 'blog/img/default-cat.svg' %}" alt="Gato en adopción">
+        {% endif %}
+        <div class="p">
+          <h3><a href="{% url 'blog:post_detail' p.slug %}">{{ p.title }}</a></h3>
+          <div class="meta">
+            {{ p.category.name }} ·
+            {% if p.published_at %}{{ p.published_at|date:"d/m/Y" }}{% else %}Sin fecha{% endif %}
+          </div>
+          <p>{{ p.content|striptags|truncatechars:140 }}</p>
+          {% if p.tags.all %}
+            <div class="tags">
+              {% for t in p.tags.all %}
+                <a class="tag" href="?tag={{ t.slug|urlencode }}">{{ t.name }}</a>
+              {% endfor %}
+            </div>
+          {% endif %}
+        </div>
+      </article>
+    {% endfor %}
+  </div>
+{% else %}
+  <ul><li>Sin publicaciones.</li></ul>
+{% endif %}
+{% endblock %}
