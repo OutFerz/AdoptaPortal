@@ -71,10 +71,10 @@ pip uninstall -r requirements.txt -y
 1. **Obtener el proyecto** (ver paso 2.1 de la instalación completa)
    ```bash
    # Opción A: Clonar con Git
-   git clone https://github.com/Tornadusk/PortalMascotas.git
+   git clone https://github.com/OutFerz/AdoptaPortal
    cd PortalMascotas
    
-   # Opción B: Descargar desde https://github.com/Tornadusk/PortalMascotas
+   # Opción B: Descargar desde https://github.com/OutFerz/AdoptaPortal
    ```
 
 2. **Activar el entorno virtual** (ver paso 2.2 de la instalación completa)
@@ -120,12 +120,12 @@ pip uninstall -r requirements.txt -y
 
 **Opción A: Clonar con Git (recomendado)**
    ```bash
-   git clone https://github.com/Tornadusk/PortalMascotas.git
+   git clone https://github.com/OutFerz/AdoptaPortal
    cd PortalMascotas
    ```
 
 **Opción B: Descargar desde GitHub**
-   - Ir a: https://github.com/Tornadusk/PortalMascotas
+   - Ir a: https://github.com/OutFerz/AdoptaPortal
    - Hacer clic en "Code" → "Download ZIP"
    - Extraer el archivo ZIP
    - Abrir terminal en la carpeta extraída
@@ -513,16 +513,6 @@ DATABASES = {
 
 Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más detalles.
 
-## 👥 Autores
-
-- **Tornadusk** - *Desarrollo inicial* - [GitHub](https://github.com/Tornadusk)
-
-## 📞 Contacto
-
-Si tienes preguntas o sugerencias, no dudes en contactarnos:
-
-- GitHub: [@Tornadusk](https://github.com/Tornadusk)
-- Email: [tu-email@ejemplo.com]
 
 ## 🙏 Agradecimientos
 
@@ -703,5 +693,3 @@ PortalMascotas/
 ```
 
 ---
-
-⭐ ¡No olvides darle una estrella al proyecto si te gusta!
