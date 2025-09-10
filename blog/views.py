@@ -1,39 +1,73 @@
 from django.shortcuts import get_object_or_404, render, redirect
 from django.db.models import Q
-from django.utils import timezone
-from .models import Post, Category, Comment
-from django import forms
+from django.contrib import messages
 
-class CommentForm(forms.Form):
-    name = forms.CharField(max_length=80)
-    email = forms.EmailField()
-    body = forms.CharField(widget=forms.Textarea)
+from .models import Post, Category, Tag, Comment
+from .forms import CommentForm  # usa el ModelForm que te propuse en blog/forms.py
+
 
 def post_list(request):
-    q = request.GET.get("q") or ""
-    tag = request.GET.get("tag")
-    cat = request.GET.get("cat")
+    q = (request.GET.get("q") or "").strip()
+    tag_slug = (request.GET.get("tag") or "").strip()
+    cat_slug = (request.GET.get("cat") or "").strip()
 
-    qs = Post.objects.filter(status="published").order_by("-published_at")
+    qs = (
+        Post.objects.filter(status="published")
+        .select_related("category", "author")
+        .prefetch_related("tags")
+        .order_by("-published_at", "-id")
+    )
+
     if q:
-        qs = qs.filter(Q(title__icontains=q) | Q(content__icontains=q) | Q(tags__icontains=q))
-    if tag:
-        qs = qs.filter(tags__icontains=tag)
-    if cat:
-        qs = qs.filter(category__slug=cat)
+        qs = qs.filter(
+            Q(title__icontains=q) |
+            Q(content__icontains=q) |
+            Q(tags__name__icontains=q) |
+            Q(tags__slug__icontains=q)
+        )
 
-    return render(request, "blog/post_list.html", {"posts": qs, "q": q, "tag": tag, "cat": cat})
+    if tag_slug:
+        qs = qs.filter(tags__slug=tag_slug)
+
+    if cat_slug:
+        qs = qs.filter(category__slug=cat_slug)
+
+    qs = qs.distinct()
+
+    context = {
+        "posts": qs,
+        "q": q,
+        "tag": tag_slug,
+        "cat": cat_slug,
+    }
+    return render(request, "blog/post_list.html", context)
+
 
 def post_detail(request, slug):
-    post = get_object_or_404(Post, slug=slug, status="published")
-    form = CommentForm(request.POST or None)
-    if request.method == "POST" and form.is_valid():
-        data = form.cleaned_data
-        comments = post.comments or []
-        comments.append(Comment(**data))
-        post.comments = comments
-        if not post.published_at:
-            post.published_at = timezone.now()
-        post.save()
-        return redirect("blog:post_detail", slug=post.slug)
-    return render(request, "blog/post_detail.html", {"post": post, "form": form})
+    post = get_object_or_404(
+        Post.objects.select_related("category", "author").prefetch_related("tags"),
+        slug=slug,
+        status="published",
+    )
+
+    # Lista de comentarios aprobados (orden más reciente primero)
+    comments = post.comments.filter(approved=True).order_by("-created_at")
+
+    if request.method == "POST":
+        form = CommentForm(request.POST)
+        if form.is_valid():
+            c = form.save(commit=False)
+            c.post = post
+            c.save()
+            messages.success(request, "¡Gracias! Tu comentario se publicó correctamente.")
+            return redirect("blog:post_detail", slug=post.slug)
+        else:
+            messages.error(request, "Revisa los errores del formulario.")
+    else:
+        form = CommentForm()
+
+    return render(
+        request,
+        "blog/post_detail.html",
+        {"post": post, "comments": comments, "form": form},
+    )

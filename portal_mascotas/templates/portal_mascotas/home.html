@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Mascotas disponibles{% endblock %}
+
+{% block content %}
+<section class="hero">
+  <h2 class="hero-title">🐾 Mascotas disponibles para adopción</h2>
+  <p class="hero-description">Encuentra a tu próximo compañero y envía tu solicitud de adopción.</p>
+</section>
+
+<section class="filters">
+  <form method="get" class="feature-card" style="text-align:left">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;">
+      <input type="search" name="q" value="{{ q }}" placeholder="Buscar por nombre, raza, descripción…">
+
+      <select name="tipo">
+        <option value="">— Tipo —</option>
+        {% for value,label in tipos %}
+          <option value="{{ value }}" {% if tipo == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+
+      <select name="ubicacion">
+        <option value="">— Ubicación —</option>
+        {% for u in ubicaciones %}
+          <option value="{{ u }}" {% if ubic == u %}selected{% endif %}>{{ u }}</option>
+        {% endfor %}
+      </select>
+
+      <select name="sexo">
+        <option value="">— Sexo —</option>
+        {% for value,label in sexos %}
+          <option value="{{ value }}" {% if sexo == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+
+      <select name="edad">
+        <option value="">— Rango de edad —</option>
+        {% for min,max,label in rangos_edad %}
+          <option value="{{ forloop.counter0 }}" {% if edad == forloop.counter0|stringformat:"s" %}selected{% endif %}>
+            {{ label }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="feature-link" type="submit">Filtrar</button>
+      <a class="feature-link" href="{% url 'home' %}" style="background:#607d8b">Limpiar</a>
+    </div>
+  </form>
+</section>
+
+<section class="features" style="margin-top:10px">
+  <div class="feature-grid">
+    {% if mascotas %}
+      {% for m in mascotas %}
+        <article class="feature-card card">
+          <div style="height:180px;display:flex;align-items:center;justify-content:center;margin-bottom:10px;overflow:hidden;border-radius:8px;background:#f7f7f7;border:1px solid #eee;">
+            {% if m.foto %}
+              <img src="{{ m.foto.url }}" alt="{{ m.nombre|default_if_none:'Mascota' }} #{{ m.id }}" style="width:100%;height:100%;object-fit:cover;">
+            {% else %}
+              <img src="{% static 'blog/img/default-cat.svg' %}" alt="Mascota #{{ m.id }}" style="width:120px;opacity:.85;">
+            {% endif %}
+          </div>
+
+          <h3 class="feature-title">{{ m.nombre|default_if_none:"Mascota" }}</h3>
+          <p class="feature-description" style="margin:6px 0 12px;">
+            <strong>Tipo:</strong> {{ m.get_tipo_display|default:m.tipo }} ·
+            <strong>Sexo:</strong> {{ m.get_sexo_display|default:m.sexo }} ·
+            <strong>Edad:</strong> {{ m.edad_meses }} meses
+            <br>
+            <strong>Ubicación:</strong> {{ m.ubicacion|default:"—" }}
+          </p>
+
+          <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+            {% url 'solicitud_adopcion:crear_solicitud' as crear_url %}
+            <a class="feature-link" href="{{ crear_url }}?mascota={{ m.id }}">Solicitar adopción</a>
+            {% if m.descripcion %}
+              <a class="feature-link" href="#" onclick="alert(`{{ m.descripcion|escapejs }}`);return false;" style="background:#2196f3">Detalles</a>
+            {% endif %}
+          </div>
+        </article>
+      {% endfor %}
+    {% else %}
+      <div class="feature-card" style="grid-column:1/-1;text-align:center">
+        <p>No hay mascotas disponibles con los filtros aplicados.</p>
+      </div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

@@ -48,6 +48,54 @@
   {% endif %}
 </article>
 
+<hr style="margin: 2rem 0;">
+
+<section id="comments">
+  <h2 style="margin-bottom: 1rem;">💬 Comentarios ({{ comments|length }})</h2>
+
+  {% if messages %}
+    <div class="auth-messages" style="margin-bottom:1rem;">
+      {% for message in messages %}
+        <div class="auth-message {% if message.tags %}{{ message.tags }}{% endif %}">{{ message }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  {% if comments %}
+    <ul style="list-style:none; padding:0; display:grid; gap:12px; margin-bottom:1.5rem;">
+      {% for c in comments %}
+        <li style="background:#fff; border:1px solid #eee; border-radius:12px; padding:1rem;">
+          <div style="font-weight:600;">{{ c.name }} <span style="opacity:.6;">— {{ c.created_at|date:"d M Y H:i" }}</span></div>
+          <div style="margin-top:.5rem;">{{ c.body|linebreaksbr }}</div>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>¡Sé el primero en comentar!</p>
+  {% endif %}
+
+  <h3 style="margin: 1rem 0;">✍️ Deja tu comentario</h3>
+  <form method="post" class="auth-form" style="max-width:720px;">
+    {% csrf_token %}
+    <div class="form-group">
+      <label for="id_name">Nombre</label>
+      {{ form.name }}
+      {% if form.name.errors %}<div class="form-errors">{{ form.name.errors|striptags }}</div>{% endif %}
+    </div>
+    <div class="form-group">
+      <label for="id_email">Email</label>
+      {{ form.email }}
+      {% if form.email.errors %}<div class="form-errors">{{ form.email.errors|striptags }}</div>{% endif %}
+    </div>
+    <div class="form-group">
+      <label for="id_body">Comentario</label>
+      {{ form.body }}
+      {% if form.body.errors %}<div class="form-errors">{{ form.body.errors|striptags }}</div>{% endif %}
+    </div>
+    <button class="auth-btn btn-login" type="submit">Publicar comentario</button>
+  </form>
+</section>
+
 <section class="back-to-blog" style="margin-top:2rem;">
   <a class="feature-link" href="{% url 'blog:post_list' %}">← Ver más publicaciones</a>
 </section>
