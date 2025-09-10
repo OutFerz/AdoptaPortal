@@ -1,33 +1,66 @@
-{% extends "blog/base.html" %}
+{% extends "base.html" %}
 {% load static %}
-{% block title %}Blog - Lista{% endblock %}
+{% block title %}Blog — Cuidados y Consejos{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'blog/css/blog.css' %}">
+{% endblock %}
 
 {% block content %}
-<form method="get" class="search" data-autosubmit>
-  <input type="search" name="q" value="{{ q|default:'' }}" placeholder="Buscar...">
+
+<section class="blog-hero">
+  <h2 class="hero-title">📝 Blog de cuidados y consejos</h2>
+  <p class="hero-description">Encuentra guías, tips y buenas prácticas para el bienestar de tus mascotas.</p>
+</section>
+
+<form method="get" class="search" data-autosubmit style="margin-bottom: 1.5rem;">
+  <input type="search" name="q" value="{{ q|default:'' }}" placeholder="Buscar por título o contenido…" />
   <button class="btn">Buscar</button>
 </form>
 
+{% if q or tag or cat %}
+  <div class="active-filters" style="margin-bottom:1rem;">
+    <strong>Filtros activos:</strong>
+    {% if q %}<span class="chip">🔎 "{{ q }}"</span>{% endif %}
+    {% if tag %}<span class="chip">🏷️ etiqueta: {{ tag }}</span>{% endif %}
+    {% if cat %}<span class="chip">📂 categoría: {{ cat }}</span>{% endif %}
+    <a class="link-reset" href="{% url 'blog:post_list' %}">Quitar filtros</a>
+  </div>
+{% endif %}
+
 {% if posts %}
-  <div class="grid" style="margin-top:14px">
-    {% for p in posts %}
-      <article class="card">
-        {% if p.hero_image %}
-          <img src="{{ p.hero_image.url }}" alt="Imagen de {{ p.title }}">
-        {% else %}
-          <img src="{% static 'blog/img/default-cat.svg' %}" alt="Gato en adopción">
-        {% endif %}
-        <div class="p">
-          <h3><a href="{% url 'blog:post_detail' p.slug %}">{{ p.title }}</a></h3>
-          <div class="meta">
-            {{ p.category.name }} ·
-            {% if p.published_at %}{{ p.published_at|date:"d/m/Y" }}{% else %}Sin fecha{% endif %}
+  <div class="post-grid">
+    {% for post in posts %}
+      <article class="post-card card">
+        <a class="thumb" href="{% url 'blog:post_detail' post.slug %}">
+          {% if post.hero_image %}
+            <img src="{{ post.hero_image.url }}" alt="Imagen de {{ post.title }}">
+          {% else %}
+            <img src="{% static 'blog/img/default-cat.svg' %}" alt="Imagen por defecto">
+          {% endif %}
+        </a>
+
+        <div class="post-body">
+          <h3 class="post-title">
+            <a href="{% url 'blog:post_detail' post.slug %}">{{ post.title }}</a>
+          </h3>
+
+          <div class="post-meta">
+            <span>📂 <a href="{% url 'blog:post_list' %}?cat={{ post.category.slug }}">{{ post.category.name }}</a></span>
+            {% if post.published_at %} ·
+              <time datetime="{{ post.published_at|date:'c' }}">📅 {{ post.published_at|date:"d M Y" }}</time>
+            {% endif %}
+            · 👤 {{ post.author.username }}
           </div>
-          <p>{{ p.content|striptags|truncatechars:140 }}</p>
-          {% if p.tags.all %}
+
+          <p class="post-excerpt">
+            {{ post.content|striptags|truncatewords:40 }}
+          </p>
+
+          {% if post.tags.all %}
             <div class="tags">
-              {% for t in p.tags.all %}
-                <a class="tag" href="?tag={{ t.slug|urlencode }}">{{ t.name }}</a>
+              {% for t in post.tags.all %}
+                <a class="tag" href="{% url 'blog:post_list' %}?tag={{ t.slug }}">#{{ t.name }}</a>
               {% endfor %}
             </div>
           {% endif %}
@@ -36,6 +69,11 @@
     {% endfor %}
   </div>
 {% else %}
-  <ul><li>Sin publicaciones.</li></ul>
+  <p>No hay publicaciones que coincidan con tu búsqueda.</p>
 {% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'blog/js/blog.js' %}"></script>
 {% endblock %}
