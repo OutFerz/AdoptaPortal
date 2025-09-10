@@ -1,41 +1,61 @@
 from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from .models import Usuario
 
 @admin.register(Usuario)
-class UsuarioAdmin(UserAdmin):
-    """
-    Configuración del admin para el modelo Usuario personalizado
-    """
-    
-    # Campos a mostrar en la lista
-    list_display = ('username', 'email', 'is_active', 'fecha_creacion')
-    list_filter = ('is_active', 'is_staff', 'is_superuser', 'fecha_creacion')
-    search_fields = ('username', 'email')
-    ordering = ('-fecha_creacion',)
-    
-    # Configuración de campos en el formulario
+class UsuarioAdmin(BaseUserAdmin):
+    """Admin para el modelo de usuario personalizado."""
+    model = Usuario
+
+    # Listado
+    list_display = ("username", "email", "is_active", "is_staff", "is_superuser", "fecha_creacion")
+    list_filter = ("is_active", "is_staff", "is_superuser", "groups")
+    search_fields = ("username", "email")
+    ordering = ("-fecha_creacion",)
+    date_hierarchy = "fecha_creacion"
+
+    # Campos de solo lectura (no editables en admin)
+    readonly_fields = ("last_login", "date_joined", "fecha_creacion", "fecha_actualizacion")
+
+    # ⚠️ Redefinimos todos los fieldsets para no duplicar campos
     fieldsets = (
-        ('Información básica', {
-            'fields': ('username', 'email', 'password')
-        }),
-        ('Permisos', {
-            'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions'),
-            'classes': ('collapse',)
-        }),
-        ('Fechas importantes', {
-            'fields': ('last_login', 'date_joined', 'fecha_creacion', 'fecha_actualizacion'),
-            'classes': ('collapse',)
-        }),
+        (None, {"fields": ("username", "password")}),
+        ("Información personal", {"fields": ("first_name", "last_name", "email")}),
+        (
+            "Permisos",
+            {
+                "classes": ("collapse",),
+                "fields": ("is_active", "is_staff", "is_superuser", "groups", "user_permissions"),
+            },
+        ),
+        (
+            "Fechas importantes",
+            {
+                "classes": ("collapse",),
+                "fields": ("last_login", "date_joined", "fecha_creacion", "fecha_actualizacion"),
+            },
+        ),
     )
-    
-    # Campos para agregar nuevo usuario
+
+    # Form para crear usuarios desde admin
     add_fieldsets = (
-        ('Información básica', {
-            'classes': ('wide',),
-            'fields': ('username', 'email', 'password1', 'password2'),
-        }),
+        (
+            None,
+            {
+                "classes": ("wide",),
+                "fields": (
+                    "username",
+                    "email",
+                    "password1",
+                    "password2",
+                    "is_active",
+                    "is_staff",
+                    "is_superuser",
+                    "groups",
+                    "user_permissions",
+                ),
+            },
+        ),
     )
-    
-    # Filtros en la barra lateral
-    filter_horizontal = ('groups', 'user_permissions')
+
+    filter_horizontal = ("groups", "user_permissions")

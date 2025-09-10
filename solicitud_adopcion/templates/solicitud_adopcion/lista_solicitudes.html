@@ -16,7 +16,6 @@
         </div>
 
         <div class="solicitudes-actions">
-            <a href="{% url 'solicitud_adopcion:crear_solicitud' %}" class="btn-solicitud btn-solicitud-primary">➕ Nueva Solicitud</a>
             <a href="{% url 'home' %}" class="btn-solicitud btn-solicitud-secondary">🏠 Volver al Inicio</a>
         </div>
 
@@ -64,7 +63,6 @@
                 <div class="solicitud-body" style="text-align: center; padding: 40px;">
                     <h3 style="color: #666; margin-bottom: 20px;">🐕 No tienes solicitudes de adopción</h3>
                     <p style="color: #888; margin-bottom: 30px;">Comienza creando tu primera solicitud de adopción</p>
-                    <a href="{% url 'solicitud_adopcion:crear_solicitud' %}" class="btn-solicitud btn-solicitud-success">Crear Primera Solicitud</a>
                 </div>
             </div>
         {% endif %}

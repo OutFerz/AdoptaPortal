@@ -9,7 +9,7 @@ from .models import Usuario
 def login_view(request):
     """Vista para el login de usuarios (con usuario o correo)"""
     if request.user.is_authenticated:
-        return redirect('dashboard')
+        return redirect('home')
     
     if request.method == 'POST':
         username_or_email = request.POST.get('username', '').strip()
@@ -34,7 +34,7 @@ def login_view(request):
                 login(request, user)
                 messages.success(request, f"¡Bienvenido, {user.username}!")
                 # Redirigir a la página que intentaba acceder o al dashboard
-                next_page = request.GET.get('next', 'dashboard')
+                next_page = request.GET.get('next', 'home')
                 return redirect(next_page)
             else:
                 messages.error(request, "Usuario/Correo o contraseña inválidos.")
@@ -52,7 +52,7 @@ def logout_view(request):
 def register_view(request):
     """Vista para el registro de nuevos usuarios"""
     if request.user.is_authenticated:
-        return redirect('dashboard')
+        return redirect('home')
     
     if request.method == 'POST':
         # Obtener datos del formulario
