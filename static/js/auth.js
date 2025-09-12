@@ -1,24 +1,18 @@
-/* AUTH – login & register */
-
+// AUTH (login + register)
 document.addEventListener('DOMContentLoaded', () => {
-  initAuthFeatures();
-  setupPasswordToggle();
-  preventDoubleSubmit();
-});
-
-function initAuthFeatures() {
-  relaxLoginPasswordLength();
+  relaxConstraints();
   setupFormValidation();
   setupMessages();
   setupAnimations();
   setupRealTimeValidation();
-}
+  setupPasswordToggle();
+  preventDoubleSubmit();
+});
 
-/* ------------ Validación de formularios ------------ */
+/* ---------------- core ---------------- */
 
 function setupFormValidation() {
-  const forms = document.querySelectorAll('.auth-form');
-  forms.forEach(form => {
+  document.querySelectorAll('.auth-form').forEach(form => {
     form.addEventListener('submit', e => {
       if (!validateForm(form)) {
         e.preventDefault();
@@ -39,45 +33,35 @@ function validateForm(form) {
   return ok;
 }
 
-/* === REGLA CENTRAL: solo pide 8+ en formularios con password2 === */
+/* REGLA: solo validar longitud 8+ en registro y únicamente para password1/password2 */
 function validateInput(input) {
-  const value = (input.value || '').trim();
+  const val = (input.value || '').trim();
   const form = input.closest('form');
   const onRegister = isRegisterForm(form);
 
-  let ok = true;
-  let msg = '';
+  let ok = true, msg = '';
 
-  if (input.hasAttribute('required') && !value) {
-    msg = 'Este campo es obligatorio';
-    ok = false;
+  if (input.hasAttribute('required') && !val) {
+    ok = false; msg = 'Este campo es obligatorio';
   }
 
-  if (ok && input.type === 'email' && value) {
+  if (ok && input.type === 'email' && val) {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!re.test(value)) {
-      msg = 'Ingresa un email válido';
-      ok = false;
-    }
+    if (!re.test(val)) { ok = false; msg = 'Ingresa un email válido'; }
   }
 
-  if (ok && input.type === 'password' && value) {
-    // SOLO en registro (no en login)
-    if (onRegister && value.length < 8) {
-      msg = 'La contraseña debe tener al menos 8 caracteres';
-      ok = false;
+  if (ok && input.type === 'password' && val) {
+    const isRegPassword = ['password1','password2'].includes(input.name);
+    if (onRegister && isRegPassword && val.length < 8) {
+      ok = false; msg = 'La contraseña debe tener al menos 8 caracteres';
     }
+    // En login (name="password") NO hay restricción de longitud.
   }
 
-  if (ok && input.name === 'username' && value) {
+  if (ok && input.name === 'username' && val) {
     const reUser = /^[a-zA-Z0-9_]+$/;
-    if (!reUser.test(value)) {
-      msg = 'El nombre de usuario solo puede contener letras, números y guiones bajos';
-      ok = false;
-    } else if (value.length < 3) {
-      msg = 'El nombre de usuario debe tener al menos 3 caracteres';
-      ok = false;
-    }
+    if (!reUser.test(val)) { ok = false; msg = 'Solo letras, números y _'; }
+    else if (val.length < 3) { ok = false; msg = 'Mínimo 3 caracteres'; }
   }
 
   paintFieldValidation(input, ok, msg);
@@ -95,27 +79,23 @@ function validatePasswordMatch(form) {
 }
 
 function isRegisterForm(form) {
-  // Considera "registro" si existe el segundo campo de contraseña
   return !!(form && form.querySelector('input[name="password2"]'));
 }
 
-/* ------------ Validación en tiempo real ------------ */
+/* ---------------- realtime ---------------- */
 
 function setupRealTimeValidation() {
-  const inputs = document.querySelectorAll('.auth-form input');
-  inputs.forEach(input => {
+  document.querySelectorAll('.auth-form input').forEach(input => {
     input.addEventListener('blur', function () { validateInput(this); });
     let t;
     input.addEventListener('input', function () {
       clearTimeout(t);
-      t = setTimeout(() => {
-        if (this.value.trim()) validateInput(this);
-      }, 400);
+      t = setTimeout(() => { if (this.value.trim()) validateInput(this); }, 300);
     });
   });
 }
 
-/* ------------ Mensajes/Errores ------------ */
+/* ---------------- ui helpers ---------------- */
 
 function paintFieldValidation(input, ok, msg) {
   const group = input.closest('.form-group');
@@ -136,123 +116,69 @@ function paintFieldValidation(input, ok, msg) {
   }
 }
 
-function showInputError(input, message) {
-  paintFieldValidation(input, false, message);
-}
+function showInputError(input, message) { paintFieldValidation(input, false, message); }
 
 function clearFormErrors(form) {
   form.querySelectorAll('.form-errors').forEach(e => e.remove());
-  form.querySelectorAll('input').forEach(i => i.classList.remove('is-invalid', 'is-valid'));
+  form.querySelectorAll('input').forEach(i => i.classList.remove('is-invalid','is-valid'));
 }
 
 function setupMessages() {
-  document.querySelectorAll('.auth-message').forEach(msg => {
-    if (msg.classList.contains('success')) {
-      setTimeout(() => fadeOutMessage(msg), 5000);
-    }
-    if (msg.classList.contains('error')) {
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.textContent = '×';
-      btn.className = 'close-btn';
-      btn.style.cssText =
-        'background:none;border:none;font-size:1.5rem;cursor:pointer;float:right;opacity:.7;';
-      btn.onclick = () => msg.remove();
-      msg.appendChild(btn);
+  document.querySelectorAll('.auth-message').forEach(m => {
+    if (m.classList.contains('success')) setTimeout(() => fadeOutMessage(m), 5000);
+    if (m.classList.contains('error')) {
+      const b = document.createElement('button');
+      b.type = 'button'; b.textContent = '×'; b.className = 'close-btn';
+      b.style.cssText='background:none;border:none;font-size:1.5rem;cursor:pointer;float:right;opacity:.7;';
+      b.onclick = () => m.remove();
+      m.appendChild(b);
     }
   });
 }
 
-function fadeOutMessage(el) {
-  el.style.transition = 'opacity .5s';
-  el.style.opacity = '0';
-  setTimeout(() => el.remove(), 500);
+function fadeOutMessage(el){ el.style.transition='opacity .5s'; el.style.opacity='0'; setTimeout(()=>el.remove(),500); }
+
+function showLoadingState(form){
+  const btn=form.querySelector('.auth-btn'); if(!btn) return;
+  const t=btn.textContent; btn.disabled=true; btn.textContent='Procesando...'; btn.style.opacity='0.6';
+  setTimeout(()=>{ btn.disabled=false; btn.textContent=t; btn.style.opacity='1'; },3000);
 }
 
-/* ------------ Carga/Animaciones ------------ */
-
-function showLoadingState(form) {
-  const btn = form.querySelector('.auth-btn');
-  if (!btn) return;
-  const txt = btn.textContent;
-  btn.disabled = true;
-  btn.textContent = 'Procesando...';
-  btn.style.opacity = '0.6';
-  setTimeout(() => {
-    btn.disabled = false;
-    btn.textContent = txt;
-    btn.style.opacity = '1';
-  }, 3000);
-}
-
-function setupAnimations() {
-  const card = document.querySelector('.auth-card');
-  if (card) {
-    card.style.opacity = '0';
-    card.style.transform = 'translateY(30px)';
-    setTimeout(() => {
-      card.style.transition = 'all .6s ease';
-      card.style.opacity = '1';
-      card.style.transform = 'translateY(0)';
-    }, 100);
+function setupAnimations(){
+  const card=document.querySelector('.auth-card');
+  if(card){ card.style.opacity='0'; card.style.transform='translateY(30px)';
+    setTimeout(()=>{ card.style.transition='all .6s ease'; card.style.opacity='1'; card.style.transform='translateY(0)'; },100);
   }
 }
 
-/* ------------ Utilidades ------------ */
-
-function showNotification(message, type = 'info') {
-  const n = document.createElement('div');
-  n.className = `auth-message ${type}`;
-  n.textContent = message;
-  const box = document.querySelector('.auth-messages') || document.querySelector('.auth-card');
-  if (box) {
-    box.insertBefore(n, box.firstChild);
-    setTimeout(() => fadeOutMessage(n), 5000);
-  }
-}
-
-/* hace que el login NO tenga restricciones de longitud nativas */
-function relaxLoginPasswordLength() {
-  document.querySelectorAll('input[type="password"]').forEach(input => {
-    const form = input.closest('form');
-    const onRegister = isRegisterForm(form);
-    if (!onRegister) {
-      ['minlength', 'pattern', 'title'].forEach(a => input.removeAttribute(a));
-    }
+function setupPasswordToggle(){
+  document.querySelectorAll('input[type="password"]').forEach(input=>{
+    const g=input.closest('.form-group'); if(!g) return; g.style.position='relative';
+    const btn=document.createElement('button');
+    btn.type='button'; btn.innerHTML='👁️'; btn.className='password-toggle';
+    btn.style.cssText='position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:1rem;';
+    btn.onclick=()=>{ input.setAttribute('type', input.getAttribute('type')==='password'?'text':'password'); };
+    g.appendChild(btn);
   });
 }
 
-/* toggler ojo contraseña */
-function setupPasswordToggle() {
-  document.querySelectorAll('input[type="password"]').forEach(input => {
-    const group = input.closest('.form-group');
-    if (!group) return;
-    group.style.position = 'relative';
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.innerHTML = '👁️';
-    btn.className = 'password-toggle';
-    btn.style.cssText =
-      'position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:1rem;';
-    btn.onclick = () => {
-      const t = input.getAttribute('type') === 'password' ? 'text' : 'password';
-      input.setAttribute('type', t);
-    };
-    group.appendChild(btn);
-  });
-}
-
-/* evita doble submit */
-function preventDoubleSubmit() {
-  document.querySelectorAll('.auth-form').forEach(form => {
-    let sending = false;
-    form.addEventListener('submit', e => {
-      if (sending) {
-        e.preventDefault();
-        return false;
-      }
-      sending = true;
-      setTimeout(() => (sending = false), 3000);
+function preventDoubleSubmit(){
+  document.querySelectorAll('.auth-form').forEach(form=>{
+    let sending=false;
+    form.addEventListener('submit',e=>{
+      if(sending){ e.preventDefault(); return false; }
+      sending=true; setTimeout(()=>sending=false,3000);
     });
+  });
+}
+
+/* --------------- constraints/native validation --------------- */
+
+function relaxConstraints() {
+  // Desactiva validación nativa en todos los formularios
+  document.querySelectorAll('.auth-form').forEach(f => f.setAttribute('novalidate','novalidate'));
+  // Elimina minlength/pattern/title de TODOS los password (usamos nuestra validación JS)
+  document.querySelectorAll('input[type="password"]').forEach(i=>{
+    ['minlength','pattern','title'].forEach(a=>i.removeAttribute(a));
   });
 }
