@@ -139,5 +139,10 @@ venv/
 .env
 
 db.sqlite3
-media/
 staticfiles/
+
+# Media: ignora todo salvo las fotos de mascotas
+media/*
+!media/.gitkeep
+!media/mascotas/
+!media/mascotas/**
