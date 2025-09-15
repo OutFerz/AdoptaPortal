@@ -1,3 +1,4 @@
+# solicitud_adopcion/views.py
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -15,7 +16,7 @@ def lista_solicitudes(request):
         SolicitudAdopcion.objects.filter(usuario=request.user)
         .order_by("-fecha_solicitud")
     )
-    context = {"solicitudes": solicitudes, "titulo": "Mis Solicitudes de Adopción"}
+    context = {"solicitudes": solicitudes, "titulo": "Mis Solicitudes"}
     return render(request, "solicitud_adopcion/lista_solicitudes.html", context)
 
 
@@ -37,20 +38,21 @@ def crear_solicitud_rapida(request, mascota_id: int):
 
     try:
         # Evitar duplicados mientras haya una pendiente
-        existe_pendiente = SolicitudAdopcion.objects.filter(
+        ya_pendiente = SolicitudAdopcion.objects.filter(
             usuario=request.user, mascota=mascota, estado="pendiente"
         ).exists()
 
-        if existe_pendiente:
+        if ya_pendiente:
             messages.info(
                 request, f"Ya tienes una solicitud pendiente para {mascota.nombre}."
             )
         else:
-            SolicitudAdopcion.objects.create(
+            solicitud = SolicitudAdopcion.objects.create(
                 usuario=request.user, mascota=mascota, mensaje=mensaje
             )
+            print(f"🐾 Solicitud creada: id={solicitud.id} usuario={request.user.username} mascota={mascota.nombre}")
             messages.success(
-                request, f"¡Solicitud enviada correctamente para {mascota.nombre}!"
+                request, f"🐾 ¡Solicitud enviada con éxito para {mascota.nombre}! 🐾"
             )
 
     except ValidationError as e:
@@ -84,8 +86,8 @@ def responder_solicitud(request, solicitud_id: int):
     solicitud = get_object_or_404(SolicitudAdopcion, id=solicitud_id)
 
     if request.user != solicitud.mascota.responsable:
-        messages.error(request, "No tienes permisos para responder esta solicitud.")
-        return redirect("solicitud_adopcion:detalle_solicitud", solicitud_id)
+        messages.error(request, "No tienes permiso para responder esta solicitud.")
+        return redirect("home")
 
     if request.method == "POST":
         estado = request.POST.get("estado")
