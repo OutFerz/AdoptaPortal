@@ -1,10 +1,10 @@
-# solicitud_adopcion/views.py
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.views.decorators.http import require_POST
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
+from django.urls import reverse
 from .models import SolicitudAdopcion
 from registro_mascotas.models import Mascota
 
@@ -50,13 +50,15 @@ def crear_solicitud_rapida(request, mascota_id: int):
             solicitud = SolicitudAdopcion.objects.create(
                 usuario=request.user, mascota=mascota, mensaje=mensaje
             )
-            print(f"🐾 Solicitud creada: id={solicitud.id} usuario={request.user.username} mascota={mascota.nombre}")
+            print(
+                f"🐾 Solicitud creada: id={solicitud.id} usuario={request.user.username} mascota={mascota.nombre}"
+            )
             messages.success(
                 request, f"🐾 ¡Solicitud enviada con éxito para {mascota.nombre}! 🐾"
             )
+            return redirect(reverse("home") + "#flash")
 
     except ValidationError as e:
-        # Errores de clean()/full_clean() del modelo
         messages.error(request, " ".join(getattr(e, "messages", [str(e)])))
     except IntegrityError:
         messages.info(
