@@ -145,4 +145,8 @@ staticfiles/
 media/*
 !media/.gitkeep
 !media/mascotas/
-!media/mascotas/**
+!media/mascotas/**__pycache__/
+*.pyc
+db.sqlite3
+media/
+run_log.txt
