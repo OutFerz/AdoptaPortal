@@ -15,7 +15,7 @@ def lista_solicitudes(request):
         SolicitudAdopcion.objects.filter(usuario=request.user)
         .order_by("-fecha_solicitud")
     )
-    context = {"solicitudes": solicitudes, "titulo": "Mis Solicitudes de Adopción"}
+    context = {"solicitudes": solicitudes, "titulo": "Mis Solicitudes"}
     return render(request, "solicitud_adopcion/lista_solicitudes.html", context)
 
 
@@ -24,11 +24,9 @@ def lista_solicitudes(request):
 def crear_solicitud_rapida(request, mascota_id: int):
     """
     Crea la solicitud desde la tarjeta de la mascota en el Home.
-    Maneja validaciones y errores para evitar 500s.
     """
     mascota = get_object_or_404(Mascota, pk=mascota_id, estado="disponible")
 
-    # No permitir pedir tu propia mascota
     if mascota.responsable_id == request.user.id:
         messages.error(request, "No puedes solicitar adoptar tu propia mascota.")
         return redirect("home")
@@ -36,25 +34,22 @@ def crear_solicitud_rapida(request, mascota_id: int):
     mensaje = (request.POST.get("mensaje") or "").strip()
 
     try:
-        # Evitar duplicados mientras haya una pendiente
-        existe_pendiente = SolicitudAdopcion.objects.filter(
+        ya_pendiente = SolicitudAdopcion.objects.filter(
             usuario=request.user, mascota=mascota, estado="pendiente"
         ).exists()
 
-        if existe_pendiente:
+        if ya_pendiente:
             messages.info(
                 request, f"Ya tienes una solicitud pendiente para {mascota.nombre}."
             )
         else:
-            SolicitudAdopcion.objects.create(
+            solicitud = SolicitudAdopcion.objects.create(
                 usuario=request.user, mascota=mascota, mensaje=mensaje
             )
-            messages.success(
-                request, f"¡Solicitud enviada correctamente para {mascota.nombre}!"
-            )
+            print(f"🐾 Solicitud creada: id={solicitud.id} usuario={request.user.username} mascota={mascota.nombre}")
+            messages.success(request, f"🐾 ¡Solicitud enviada con éxito para {mascota.nombre}! 🐾")
 
     except ValidationError as e:
-        # Errores de clean()/full_clean() del modelo
         messages.error(request, " ".join(getattr(e, "messages", [str(e)])))
     except IntegrityError:
         messages.info(
@@ -84,8 +79,8 @@ def responder_solicitud(request, solicitud_id: int):
     solicitud = get_object_or_404(SolicitudAdopcion, id=solicitud_id)
 
     if request.user != solicitud.mascota.responsable:
-        messages.error(request, "No tienes permisos para responder esta solicitud.")
-        return redirect("solicitud_adopcion:detalle_solicitud", solicitud_id)
+        messages.error(request, "No tienes permiso para responder esta solicitud.")
+        return redirect("home")
 
     if request.method == "POST":
         estado = request.POST.get("estado")
@@ -105,3 +100,4 @@ def responder_solicitud(request, solicitud_id: int):
 
     context = {"solicitud": solicitud, "titulo": f"Responder Solicitud #{solicitud.id}"}
     return render(request, "solicitud_adopcion/responder_solicitud.html", context)
+
