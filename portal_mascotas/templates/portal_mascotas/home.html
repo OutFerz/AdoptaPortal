@@ -6,7 +6,7 @@
 {% block content %}
 
 {% if messages %}
-  <div class="flash-messages" style="margin:12px 0;">
+  <div id="flash" style="margin:12px 0;">
     {% for message in messages %}
       <div class="alert {{ message.tags }}" style="padding:10px 14px;border-radius:8px;margin-bottom:8px;
            {% if message.tags == 'success' %}background:#ecfdf5;color:#065f46;border:1px solid #34d399;
@@ -20,104 +20,100 @@
 {% endif %}
 
 <style>
-  /* ---------- Filtros compactos ---------- */
-  .filters {
-    display: grid;
-    grid-template-columns: repeat(12, 1fr);
-    gap: 12px;
-    align-items: end;
-    margin-bottom: 18px;
+  /* ====== Filtros (layout ordenado en 2 filas) ====== */
+  .filters{
+    display:grid;grid-template-columns:repeat(12,minmax(0,1fr));
+    gap:12px;align-items:end;margin-bottom:18px
   }
-  .filters .field { grid-column: span 3; }
-  .filters .actions { grid-column: span 12; display:flex; gap:10px; }
-  @media (max-width: 900px) {
-    .filters .field { grid-column: span 6; }
+  .filters .field{grid-column:span 12}
+  .filters .field.search{grid-column:span 6}
+  .filters .field.tipo{grid-column:span 3}
+  .filters .field.sexo{grid-column:span 3}
+  .filters .field.edad{grid-column:span 3}
+  .filters .field.ubic{grid-column:span 6}
+  .filters .actions{
+    grid-column:span 3;display:flex;gap:10px;justify-content:flex-end;align-self:end
   }
-  @media (max-width: 640px) {
-    .filters .field, .filters .actions { grid-column: span 12; }
+  @media (max-width:900px){
+    .filters .field.search{grid-column:span 12}
+    .filters .field.tipo,.filters .field.sexo,.filters .field.edad{grid-column:span 6}
+    .filters .field.ubic{grid-column:span 12}
+    .filters .actions{grid-column:span 12;justify-content:flex-start}
   }
-  .filters label { display:block; font-size:.9rem; color:#374151; margin-bottom:6px; }
-  .filters input, .filters select {
-    width: 100%; padding:10px 12px; border:1px solid #D1D5DB; border-radius:8px; background:#fff;
+  @media (max-width:640px){
+    .filters .field,.filters .actions{grid-column:span 12}
   }
-  .btn { display:inline-block; padding:10px 14px; border-radius:8px; border:0; cursor:pointer; font-weight:600; }
-  .btn-primary { background:#4CAF50; color:#fff; }
-  .btn-secondary { background:#E5E7EB; color:#111827; }
+  .filters label{display:block;font-size:.9rem;color:#374151;margin-bottom:6px}
+  .filters input,.filters select{width:100%;padding:10px 12px;border:1px solid #D1D5DB;border-radius:8px;background:#fff}
+  .btn{display:inline-block;padding:10px 14px;border-radius:8px;border:0;cursor:pointer;font-weight:600}
+  .btn-primary{background:#4CAF50;color:#fff}
+  .btn-secondary{background:#E5E7EB;color:#111827}
 
-  /* ---------- Cards ---------- */
-  .pet-grid {
-    display: grid;
-    grid-template-columns: repeat(12, 1fr);
-    gap: 16px;
-  }
-  .pet-card {
-    grid-column: span 3;
-    background:#fff; border:1px solid #E5E7EB; border-radius:12px; overflow:hidden;
-    display:flex; flex-direction:column;
-  }
-  @media (max-width: 1200px) { .pet-card { grid-column: span 4; } }
-  @media (max-width: 900px) { .pet-card { grid-column: span 6; } }
-  @media (max-width: 640px) { .pet-card { grid-column: span 12; } }
+  .pet-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px;align-items:stretch}
+  .pet-card{grid-column:span 3;background:#fff;border:1px solid #E5E7EB;border-radius:12px;overflow:hidden;display:flex;flex-direction:column;height:100%}
+  @media (max-width:1200px){.pet-card{grid-column:span 4}}
+  @media (max-width:900px){.pet-card{grid-column:span 6}}
+  @media (max-width:640px){.pet-card{grid-column:span 12}}
 
-  .pet-thumb { aspect-ratio: 4 / 3; background: #f2f4f7; overflow: hidden; }
-  .pet-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .pet-body { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 8px; }
-  .pet-name { margin: 0; font-size: 1.15rem; font-weight: 700; color: #111827; }
-  .pet-meta { margin: 0; color: #6b7280; font-size: .95rem; }
-  .pet-desc { margin: 4px 0 0; color: #4b5563; font-size: .95rem; min-height: 3.1em; }
-  .pet-actions { margin-top: 10px; display: flex; gap: 8px; }
-  .btn {
-    display: inline-block; text-align: center;
-    padding: 10px 14px; border-radius: 8px; border: 0; cursor: pointer;
-    font-weight: 600; text-decoration: none;
-  }
-  .btn-primary { background: #4CAF50; color: #fff; }
-  .btn-outline { background: #fff; border:1px solid #D1D5DB; color:#111827; }
+  .pet-thumb{aspect-ratio:4/3;background:#f2f4f7;overflow:hidden}
+  .pet-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+
+  .pet-body{padding:14px 16px 16px;display:flex;flex-direction:column;gap:10px;flex:1;min-height:320px}
+  .pet-name{margin:0;font-size:1.15rem;font-weight:700;color:#111827}
+  .pet-meta{margin:0;color:#6b7280;font-size:.95rem}
+
+  .pet-desc{margin:4px 0 0;color:#4b5563;font-size:.95rem;line-height:1.35;display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden}
+  .pet-desc.expanded{-webkit-line-clamp:unset;max-height:none}
+  .toggle-desc{background:none;border:0;color:#2563eb;cursor:pointer;padding:0;font-weight:600;align-self:flex-start}
+
+  .msg-optional{width:100%;min-height:64px;max-height:260px;padding:10px 12px;border:1px solid #D1D5DB;border-radius:8px;resize:none;overflow:auto}
+  .pet-actions{margin-top:auto;display:flex;flex-direction:column;align-items:stretch;gap:10px}
+  .pet-actions .btn-primary{width:100%;padding-block:12px;border-radius:10px}
 </style>
 
 <div class="container">
-  <h1 style="margin: 0 0 14px; font-size: 1.6rem;">Mascotas disponibles</h1>
+  <h1 style="margin:0 0 14px;font-size:1.6rem;">Mascotas disponibles</h1>
 
   <form class="filters" method="get" action=".">
-    <div class="field">
-      <label for="tipo">Especie</label>
+    <div class="field search">
+      <label for="q">Buscar</label>
+      <input id="q" name="q" value="{{ q|default:'' }}" placeholder="Nombre, raza, descripción…">
+    </div>
+    <div class="field tipo">
+      <label for="tipo">Tipo</label>
       <select id="tipo" name="tipo">
-        <option value="">Todas</option>
+        <option value="">— Tipo —</option>
         {% for key,label in tipos %}
           <option value="{{ key }}" {% if key == tipo %}selected{% endif %}>{{ label }}</option>
         {% endfor %}
       </select>
     </div>
-
-    <div class="field">
+    <div class="field sexo">
       <label for="sexo">Sexo</label>
       <select id="sexo" name="sexo">
-        <option value="">Todos</option>
+        <option value="">— Sexo —</option>
         {% for key,label in sexos %}
           <option value="{{ key }}" {% if key == sexo %}selected{% endif %}>{{ label }}</option>
         {% endfor %}
       </select>
     </div>
-
-    <div class="field">
+    <div class="field edad">
       <label for="edad">Edad</label>
       <select id="edad" name="edad">
-        <option value="">Cualquiera</option>
-        {% for idx, rango in rangos_edad|enumerate %}
+        <option value="">— Edad —</option>
+        {% for rango in rangos_edad %}
           <option value="{{ forloop.counter0 }}" {% if forloop.counter0|stringformat:'s' == edad %}selected{% endif %}>
             {{ rango.2 }}
           </option>
         {% endfor %}
       </select>
     </div>
-
-    <div class="field">
+    <div class="field ubic">
       <label for="ubic">Ubicación</label>
       <input id="ubic" name="ubic" value="{{ ubic|default:'' }}" placeholder="Ciudad/Región">
     </div>
-
     <div class="actions">
-      <button class="btn btn-primary" type="submit">Aplicar filtros</button>
+      <button class="btn btn-primary" type="submit">Filtrar</button>
       <a class="btn btn-secondary" href="{% url 'home' %}">Limpiar</a>
     </div>
   </form>
@@ -127,24 +123,21 @@
       {% for m in mascotas %}
         <article class="pet-card">
           <div class="pet-thumb">
-            {% if m.foto %}
-              <img src="{{ m.foto.url }}" alt="{{ m.nombre }}">
-            {% else %}
-              <img src="{% static 'img/placeholder_pet.jpg' %}" alt="Mascota">
-            {% endif %}
+            {% if m.foto %}<img src="{{ m.foto.url }}" alt="{{ m.nombre }}">{% else %}<img src="{% static 'img/placeholder_pet.jpg' %}" alt="Mascota">{% endif %}
           </div>
+
           <div class="pet-body">
             <h3 class="pet-name">{{ m.nombre }}</h3>
             <p class="pet-meta">{{ m.get_tipo_display }} • {{ m.edad }} meses • {{ m.get_sexo_display }}</p>
-            <p class="pet-desc">{{ m.descripcion|default:"Sin descripción" }}</p>
-            <p class="pet-meta">Ubicación: {{ m.ubicacion|default:"-" }}</p>
+
+            <div class="pet-desc" id="desc-{{ m.id }}">{{ m.descripcion|default:"Sin descripción" }}</div>
+            <button class="toggle-desc" data-target="desc-{{ m.id }}" type="button">Ver más</button>
 
             {% if user.is_authenticated %}
               <form method="post" action="{% url 'solicitud_adopcion:crear_rapida' m.id %}" class="pet-actions">
                 {% csrf_token %}
-                <input type="hidden" name="mensaje" value="Quiero adoptar a {{ m.nombre }}">
                 <button class="btn btn-primary" type="submit">Solicitar adopción</button>
-                <a class="btn btn-outline" href="{% url 'solicitud_adopcion:lista_solicitudes' %}">Mis solicitudes</a>
+                <textarea class="msg-optional" name="mensaje" placeholder="Mensaje para la adopción (opcional)"></textarea>
               </form>
             {% else %}
               <div class="pet-actions">
@@ -160,4 +153,22 @@
   {% endif %}
 </div>
 
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  document.querySelectorAll('.toggle-desc').forEach(function(btn){
+    var id = btn.getAttribute('data-target');
+    var el = document.getElementById(id);
+    if(el && el.scrollHeight <= el.clientHeight + 1){ btn.style.display = 'none'; }
+    btn.addEventListener('click', function(){
+      if(!el) return;
+      el.classList.toggle('expanded');
+      btn.textContent = el.classList.contains('expanded') ? 'Ver menos' : 'Ver más';
+    });
+  });
+  const autosize = ta => { ta.style.height='auto'; ta.style.height=Math.min(ta.scrollHeight,260)+'px'; };
+  document.querySelectorAll('textarea.msg-optional').forEach(ta=>{ autosize(ta); ta.addEventListener('input', ()=>autosize(ta)); });
+});
+</script>
+
 {% endblock %}
+

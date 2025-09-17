@@ -1,108 +1,44 @@
-from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required
-from django.contrib import messages
-from django.views.decorators.http import require_POST
-from django.core.exceptions import ValidationError
-from django.db import IntegrityError
-from .models import SolicitudAdopcion
+# portal_mascotas/views.py
+from django.shortcuts import render
+from django.db.models import Q
 from registro_mascotas.models import Mascota
+from portal_mascotas.constantes import TIPOS_MASCOTA, SEXOS, RANGOS_EDAD
 
+def home(request):
+    q    = (request.GET.get("q") or "").strip()
+    tipo = (request.GET.get("tipo") or "").strip()
+    sexo = (request.GET.get("sexo") or "").strip()
+    edad = (request.GET.get("edad") or "").strip()   # índice del rango
+    ubic = (request.GET.get("ubic") or "").strip()
 
-@login_required
-def lista_solicitudes(request):
-    """Lista las solicitudes del usuario actual."""
-    solicitudes = (
-        SolicitudAdopcion.objects.filter(usuario=request.user)
-        .order_by("-fecha_solicitud")
-    )
-    context = {"solicitudes": solicitudes, "titulo": "Mis Solicitudes"}
-    return render(request, "solicitud_adopcion/lista_solicitudes.html", context)
+    qs = Mascota.objects.filter(estado="disponible").order_by("-fecha_registro")
 
-
-@login_required
-@require_POST
-def crear_solicitud_rapida(request, mascota_id: int):
-    """
-    Crea la solicitud desde la tarjeta de la mascota en el Home.
-    Maneja validaciones y errores para evitar 500s.
-    """
-    mascota = get_object_or_404(Mascota, pk=mascota_id, estado="disponible")
-
-    # No permitir pedir tu propia mascota
-    if mascota.responsable_id == request.user.id:
-        messages.error(request, "No puedes solicitar adoptar tu propia mascota.")
-        return redirect("home")
-
-    mensaje = (request.POST.get("mensaje") or "").strip()
-
-    try:
-        # Evitar duplicados mientras haya una pendiente
-        ya_pendiente = SolicitudAdopcion.objects.filter(
-            usuario=request.user, mascota=mascota, estado="pendiente"
-        ).exists()
-
-        if ya_pendiente:
-            messages.info(
-                request, f"Ya tienes una solicitud pendiente para {mascota.nombre}."
-            )
-        else:
-            solicitud = SolicitudAdopcion.objects.create(
-                usuario=request.user, mascota=mascota, mensaje=mensaje
-            )
-            print(f"🐾 Solicitud creada: id={solicitud.id} usuario={request.user.username} mascota={mascota.nombre}")
-            messages.success(
-                request, f"🐾 ¡Solicitud enviada con éxito para {mascota.nombre}! 🐾"
-            )
-
-    except ValidationError as e:
-        # Errores de clean()/full_clean() del modelo
-        messages.error(request, " ".join(getattr(e, "messages", [str(e)])))
-    except IntegrityError:
-        messages.info(
-            request, f"Ya existe una solicitud vigente para {mascota.nombre}."
+    if q:
+        qs = qs.filter(
+            Q(nombre__icontains=q) |
+            Q(raza__icontains=q) |
+            Q(descripcion__icontains=q)
         )
-    except Exception:
-        messages.error(
-            request, "No pudimos crear tu solicitud en este momento. Intenta nuevamente."
-        )
+    if tipo:
+        qs = qs.filter(tipo=tipo)
+    if sexo:
+        qs = qs.filter(sexo=sexo)
+    if edad != "":
+        try:
+            idx = int(edad)
+            min_m, max_m, _ = RANGOS_EDAD[idx]
+            qs = qs.filter(edad__gte=min_m, edad__lte=max_m)  # campo correcto: 'edad'
+        except (ValueError, IndexError):
+            pass
+    if ubic:
+        qs = qs.filter(ubicacion__icontains=ubic)  # filtro de ubicación
 
-    return redirect("home")
+    ctx = {
+        "mascotas": qs,
+        "tipos": TIPOS_MASCOTA,
+        "sexos": SEXOS,
+        "rangos_edad": RANGOS_EDAD,
+        "q": q, "tipo": tipo, "sexo": sexo, "edad": edad, "ubic": ubic,
+    }
+    return render(request, "portal_mascotas/home.html", ctx)
 
-
-@login_required
-def detalle_solicitud(request, solicitud_id: int):
-    """Detalle de una solicitud del usuario."""
-    solicitud = get_object_or_404(
-        SolicitudAdopcion, id=solicitud_id, usuario=request.user
-    )
-    context = {"solicitud": solicitud, "titulo": f"Mi Solicitud #{solicitud.id}"}
-    return render(request, "solicitud_adopcion/detalle_solicitud.html", context)
-
-
-@login_required
-def responder_solicitud(request, solicitud_id: int):
-    """Responder una solicitud (solo responsable de la mascota)."""
-    solicitud = get_object_or_404(SolicitudAdopcion, id=solicitud_id)
-
-    if request.user != solicitud.mascota.responsable:
-        messages.error(request, "No tienes permiso para responder esta solicitud.")
-        return redirect("home")
-
-    if request.method == "POST":
-        estado = request.POST.get("estado")
-        respuesta = (request.POST.get("respuesta") or "").strip()
-
-        if estado in ["aprobada", "rechazada"]:
-            solicitud.estado = estado
-            solicitud.respuesta = respuesta
-            solicitud.save()
-
-            if estado == "aprobada":
-                solicitud.mascota.estado = "adoptado"
-                solicitud.mascota.save()
-
-            messages.success(request, f"Solicitud {estado} correctamente.")
-            return redirect("solicitud_adopcion:detalle_solicitud", solicitud_id)
-
-    context = {"solicitud": solicitud, "titulo": f"Responder Solicitud #{solicitud.id}"}
-    return render(request, "solicitud_adopcion/responder_solicitud.html", context)
