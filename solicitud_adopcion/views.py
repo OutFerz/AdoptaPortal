@@ -29,6 +29,8 @@ def crear_solicitud_rapida(request, mascota_id: int):
         return redirect("home")
 
     mensaje = (request.POST.get("mensaje") or "").strip()
+    if not mensaje:
+        mensaje = f"Solicitud sin mensaje – {request.user.get_username()} desea adoptar a {mascota.nombre}"
 
     try:
         ya_pendiente = SolicitudAdopcion.objects.filter(
