@@ -6,6 +6,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 urlpatterns = [
+    path('publicar/', include(('registro_mascotas.urls', 'registro_mascotas'), namespace='registro_mascotas')),
     path('admin/', admin.site.urls),
     path('', views.home, name='home'),
     path('accounts/', include(('login.urls', 'login'), namespace='login')),

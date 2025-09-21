@@ -22,6 +22,11 @@
         <ul class="nav-list">
           <li><a class="nav-link" href="{% url 'home' %}">Inicio</a></li>
           <li><a class="nav-link" href="{% url 'solicitud_adopcion:lista_solicitudes' %}">Solicitudes</a></li>
+
+          {% if request.user.is_authenticated %}
+          <li><a class="nav-link" href="{% url 'registro_mascotas:publicar_mascota' %}">Publicar mascota</a></li>
+          {% endif %}
+
           <li><a class="nav-link" href="/blog/">Blog</a></li>
           <li><a class="nav-link" href="{% url 'admin:index' %}">Admin</a></li>
         </ul>
