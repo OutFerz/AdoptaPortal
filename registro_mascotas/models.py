@@ -4,19 +4,9 @@ from django.conf import settings
 from portal_mascotas.constantes import TIPOS_MASCOTA, SEXOS, ESTADOS_MASCOTA
 
 class Mascota(models.Model):
-    """
-    Registro de mascotas disponibles para adopción.
-
-    Campos alineados con la migración inicial del proyecto:
-    - nombre, tipo (choices TIPOS_MASCOTA), raza, edad (en meses),
-      sexo (choices SEXOS), descripcion, ubicacion, foto,
-      estado (choices ESTADOS_MASCOTA, default 'disponible'),
-      fecha_registro (auto), responsable (FK usuario).
-    """
     nombre = models.CharField(max_length=100, help_text="Nombre de la mascota")
     tipo = models.CharField(max_length=10, choices=TIPOS_MASCOTA)
     raza = models.CharField(max_length=100)
-    # En la migración aparece como entero en meses. Mantener consistencia:
     edad = models.PositiveIntegerField(help_text="Edad en meses")
     sexo = models.CharField(max_length=10, choices=SEXOS)
     descripcion = models.TextField(help_text="Descripción de la mascota")
@@ -42,8 +32,9 @@ class Mascota(models.Model):
 class SolicitudPublicacion(models.Model):
     """
     Solicitud de usuarios para publicar una mascota en adopción.
-    Queda en 'pendiente' hasta que el admin la revise (parte 2).
+    Queda en 'pendiente' hasta que el admin la revise.
     """
+    # Datos de la mascota
     usuario = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -57,7 +48,21 @@ class SolicitudPublicacion(models.Model):
     descripcion = models.TextField()
     ubicacion = models.CharField(max_length=200)
     foto = models.ImageField(upload_to='mascotas/solicitudes/', blank=True, null=True)
+
+    # 👤 Datos de contacto del solicitante
+    contacto_nombre = models.CharField(max_length=100, default='', blank=True)
+    contacto_email = models.EmailField(default='', blank=True)
+    contacto_direccion = models.CharField(max_length=200, default='', blank=True)
+    contacto_telefono = models.CharField(max_length=30, default='', blank=True)
+
+    # Seguridad / conformidad
+    acepta_declaracion = models.BooleanField(default=False)
+
+    # Flujo de revisión
     estado = models.CharField(max_length=15, default='pendiente')  # pendiente | aprobada | rechazada
+    rechazo_motivo = models.TextField(default='', blank=True)      # motivo mostrado al usuario cuando se rechaza
+    aceptacion_mensaje = models.TextField(default='', blank=True)  # mensaje automático al aprobar
+
     fecha_creacion = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -65,3 +70,4 @@ class SolicitudPublicacion(models.Model):
 
     def __str__(self):
         return f"SolicitudPublicacion({self.nombre}) de {self.usuario}"
+

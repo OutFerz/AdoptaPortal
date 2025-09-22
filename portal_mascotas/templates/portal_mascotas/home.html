@@ -5,25 +5,54 @@
 
 {% block content %}
 
-{% if messages %}
-  <div id="flash" style="margin:12px 0;">
-    {% for message in messages %}
-      <div class="alert {{ message.tags }}" style="padding:10px 14px;border-radius:8px;margin-bottom:8px;
-           {% if message.tags == 'success' %}background:#ecfdf5;color:#065f46;border:1px solid #34d399;
-           {% elif message.tags == 'error' %}background:#fef2f2;color:#991b1b;border:1px solid #f87171;
-           {% elif message.tags == 'info' %}background:#eff6ff;color:#1e3a8a;border:1px solid #60a5fa;
-           {% else %}background:#f3f4f6;color:#111827;border:1px solid #e5e7eb;{% endif %}">
-        🐾 {{ message }}
-      </div>
-    {% endfor %}
-  </div>
-{% endif %}
+{# ================== MODO SELECTOR / MODO FORMULARIO ================== #}
+{% if modo_selector %}
+  <section style="display:grid;grid-template-columns:repeat(12,1fr);gap:16px">
+    <article style="grid-column:span 12;background:#fff;border:1px solid #E5E7EB;border-radius:14px;padding:18px">
+      <h1 style="margin:0 0 10px;">¿Qué deseas hacer?</h1>
+      <p style="margin:0 0 14px;color:#6b7280">Elige una opción para continuar.</p>
 
-{# ====== Publicar mascota (solo cuando modo_publicar=True) ====== #}
-{% if modo_publicar %}
+      <div style="display:grid;grid-template-columns:repeat(12,1fr);gap:14px">
+        <!-- Opción 1: Publicar -->
+        <div style="grid-column:span 6;background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:16px">
+          <h3 style="margin:0 0 6px;">Publicar una mascota</h3>
+          <p style="margin:0 0 12px;color:#6b7280">Completa el formulario con los datos de tu mascota para enviarlo a revisión.</p>
+          {% if request.user.is_authenticated %}
+            <a href="{% url 'registro_mascotas:publicar_mascota' %}?modo=form" class="btn btn-primary"
+               style="display:inline-block;background:#10B981;color:#fff;padding:10px 14px;border-radius:10px;text-decoration:none;font-weight:600">
+              Publicar ahora
+            </a>
+          {% else %}
+            <a href="{% url 'login:login' %}?next={% url 'registro_mascotas:publicar_mascota' %}%3Fmodo%3Dform" class="btn btn-primary"
+               style="display:inline-block;background:#10B981;color:#fff;padding:10px 14px;border-radius:10px;text-decoration:none;font-weight:600">
+              Inicia sesión para publicar
+            </a>
+          {% endif %}
+        </div>
+
+        <!-- Opción 2: Ver estado -->
+        <div style="grid-column:span 6;background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:16px">
+          <h3 style="margin:0 0 6px;">Ver estado de mis publicaciones</h3>
+          <p style="margin:0 0 12px;color:#6b7280">Revisa si fue aprobada o rechazada. Incluye el mensaje de aceptación o el motivo del rechazo.</p>
+          {% if request.user.is_authenticated %}
+            <a href="{% url 'registro_mascotas:mis_solicitudes' %}" class="btn btn-secondary"
+               style="display:inline-block;background:#E5E7EB;color:#111827;padding:10px 14px;border-radius:10px;text-decoration:none;font-weight:600">
+              Ver estado
+            </a>
+          {% else %}
+            <a href="{% url 'login:login' %}?next={% url 'registro_mascotas:mis_solicitudes' %}" class="btn btn-secondary"
+               style="display:inline-block;background:#E5E7EB;color:#111827;padding:10px 14px;border-radius:10px;text-decoration:none;font-weight:600">
+              Inicia sesión para ver estado
+            </a>
+          {% endif %}
+        </div>
+      </div>
+    </article>
+  </section>
+
+{% elif modo_publicar %}
   <section class="ap-card">
     <h2 class="ap-title">🐾 {{ titulo_publicar|default:'Publicar mascota en adopción' }}</h2>
-
     <p class="ap-note">Los campos con <span aria-hidden="true" class="ap-required">*</span> son obligatorios.</p>
 
     <form method="post" enctype="multipart/form-data" class="ap-form">
@@ -72,41 +101,46 @@
 
       <div class="ap-actions ap-span-2">
         <button type="submit" class="btn btn-primary">Enviar solicitud</button>
-        <a href="{% url 'home' %}" class="btn btn-secondary">Cancelar</a>
+        <a href="{{ request.path }}" class="btn btn-secondary">Cancelar</a>
       </div>
     </form>
   </section>
 
   <style>
-    .ap-card{
-      margin:16px 0;padding:20px;background:#fff;border:1px solid #E5E7EB;border-radius:14px;
-      box-shadow:0 4px 10px rgba(0,0,0,.04)
-    }
+    .ap-card{margin:16px 0;padding:20px;background:#fff;border:1px solid #E5E7EB;border-radius:14px;box-shadow:0 4px 10px rgba(0,0,0,.04)}
     .ap-title{margin:0 0 6px;font-size:1.5rem}
     .ap-note{margin:0 0 14px;color:#6b7280;font-size:.95rem}
     .ap-required{color:#dc2626;font-weight:700}
-    .ap-form{
-      display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px
-    }
+    .ap-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
     .ap-field{display:flex;flex-direction:column;gap:6px}
     .ap-span-2{grid-column:1 / -1}
     .ap-help{color:#6b7280;font-size:.85rem}
     .ap-actions{display:flex;gap:10px;margin-top:4px}
-    .ap-input,.ap-select,.ap-textarea,.ap-file{
-      width:100%;padding:10px 12px;border:1px solid #D1D5DB;border-radius:10px;background:#fff;
-      outline:0;transition:border-color .15s, box-shadow .15s;font-size:1rem
-    }
+    .ap-input,.ap-select,.ap-textarea,.ap-file{width:100%;padding:10px 12px;border:1px solid #D1D5DB;border-radius:10px;background:#fff;outline:0;transition:border-color .15s, box-shadow .15s;font-size:1rem}
     .ap-textarea{min-height:100px;resize:vertical}
-    .ap-input:focus,.ap-select:focus,.ap-textarea:focus,.ap-file:focus{
-      border-color:#4CAF50;box-shadow:0 0 0 3px rgba(76,175,80,.15)
-    }
+    .ap-input:focus,.ap-select:focus,.ap-textarea:focus,.ap-file:focus{border-color:#4CAF50;box-shadow:0 0 0 3px rgba(76,175,80,.15)}
     @media (max-width:800px){ .ap-form{grid-template-columns:1fr} }
   </style>
+
+{# ================== HOME NORMAL (TU CONTENIDO ORIGINAL) ================== #}
+{% else %}
+
+{% if messages %}
+  <div id="flash" style="margin:12px 0;">
+    {% for message in messages %}
+      <div class="alert {{ message.tags }}" style="padding:10px 14px;border-radius:8px;margin-bottom:8px;
+           {% if message.tags == 'success' %}background:#ecfdf5;color:#065f46;border:1px solid #34d399;
+           {% elif message.tags == 'error' %}background:#fef2f2;color:#991b1b;border:1px solid #f87171;
+           {% elif message.tags == 'info' %}background:#eff6ff;color:#1e3a8a;border:1px solid #60a5fa;
+           {% else %}background:#f3f4f6;color:#111827;border:1px solid #e5e7eb;{% endif %}">
+        🐾 {{ message }}
+      </div>
+    {% endfor %}
+  </div>
 {% endif %}
 
-{# ====== CONTENIDO NORMAL (solo cuando NO estás publicando) ====== #}
-{% if not modo_publicar %}
 <style>
+  /* ====== Filtros (layout ordenado en 2 filas) ====== */
   .filters{
     display:grid;grid-template-columns:repeat(12,minmax(0,1fr));
     gap:12px;align-items:end;margin-bottom:18px
@@ -117,7 +151,9 @@
   .filters .field.sexo{grid-column:span 3}
   .filters .field.edad{grid-column:span 3}
   .filters .field.ubic{grid-column:span 6}
-  .filters .actions{grid-column:span 3;display:flex;gap:10px;justify-content:flex-end;align-self:end}
+  .filters .actions{
+    grid-column:span 3;display:flex;gap:10px;justify-content:flex-end;align-self:end
+  }
   @media (max-width:900px){
     .filters .field.search{grid-column:span 12}
     .filters .field.tipo,.filters .field.sexo,.filters .field.edad{grid-column:span 6}
@@ -253,6 +289,7 @@ document.addEventListener('DOMContentLoaded', function(){
   document.querySelectorAll('textarea.msg-optional').forEach(ta=>{ autosize(ta); ta.addEventListener('input', ()=>autosize(ta)); });
 });
 </script>
-{% endif %} {# /not modo_publicar #}
+
+{% endif %} {# /ELSE (home normal) #}
 
 {% endblock %}
