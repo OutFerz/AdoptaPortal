@@ -24,7 +24,7 @@
 <section class="ms-card">
   <div class="ms-header">
     <h1 class="ms-title">Mis solicitudes de publicación</h1>
-    <a href="{% url 'registro_mascotas:publicar_mascota' %}" class="btn btn-primary">Nueva solicitud</a>
+    <a href="{% url 'registro_mascotas:publicar_mascota' %}?modo=form" class="btn btn-primary">Nueva solicitud</a>
   </div>
 
   {% if solicitudes %}
@@ -39,33 +39,32 @@
                 <img src="{% static 'img/placeholder_pet.jpg' %}" alt="Mascota" class="thumb">
               {% endif %}
             </td>
+
             <td style="min-width:180px">
               <div style="font-weight:700">{{ s.nombre }}</div>
               <div class="pill">{{ s.get_tipo_display }} • {{ s.edad }} meses • {{ s.get_sexo_display }}</div>
               <div class="pill">{{ s.ubicacion }}</div>
             </td>
+
             <td style="width:160px;text-align:center">
-              {% if s.estado == 'aceptada' %}
-                <span class="ms-badge ms-badge-ok">Aceptada</span>
+              {% if s.estado == 'aprobada' %}
+                <span class="ms-badge ms-badge-ok">Aprobada</span>
               {% elif s.estado == 'rechazada' %}
                 <span class="ms-badge ms-badge-no">Rechazada</span>
               {% else %}
                 <span class="ms-badge ms-badge-pend">Pendiente</span>
               {% endif %}
             </td>
+
             <td>
-              {% if s.estado == 'aceptada' %}
-                <div class="ms-msg">✅ Tu publicación fue aprobada y ya se encuentra visible.</div>
-                {% if s.mensaje_admin %}
-                  <div class="pill">Nota del admin: {{ s.mensaje_admin }}</div>
+              {% if s.estado == 'aprobada' %}
+                <div class="ms-msg">✅ Tu publicación fue aprobada y ya está visible.</div>
+                {% if s.aceptacion_mensaje %}
+                  <div class="pill">Mensaje: {{ s.aceptacion_mensaje }}</div>
                 {% endif %}
               {% elif s.estado == 'rechazada' %}
                 <div class="ms-msg">❌ Tu solicitud fue rechazada.</div>
-                {% if s.mensaje_admin %}
-                  <div class="pill">Motivo: {{ s.mensaje_admin }}</div>
-                {% else %}
-                  <div class="pill">Motivo: —</div>
-                {% endif %}
+                <div class="pill">Motivo: {{ s.rechazo_motivo|default:"—" }}</div>
                 <div style="margin-top:8px">
                   <a href="{% url 'registro_mascotas:publicar_mascota' %}?modo=form&reintento={{ s.id }}" class="btn btn-secondary">Apelar / reenviar</a>
                 </div>
@@ -73,9 +72,9 @@
                 <div class="ms-msg">⌛ En revisión por el equipo.</div>
               {% endif %}
             </td>
+
             <td style="width:160px;text-align:right;color:#6b7280">
-              Enviada: {{ s.fecha_creacion|date:"d/m/Y H:i" }}<br>
-              Última act.: {{ s.fecha_actualizacion|date:"d/m/Y H:i" }}
+              Enviada: {{ s.fecha_creacion|date:"d/m/Y H:i" }}
             </td>
           </tr>
         {% endfor %}

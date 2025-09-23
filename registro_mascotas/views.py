@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse
 
-from .forms import PublicarMascotaForm
+from .forms import SolicitudPublicacionForm
 from .models import SolicitudPublicacion
 
 
@@ -21,43 +21,34 @@ def publicar_mascota(request):
     if modo != "form":
         return render(request, "portal_mascotas/home.html", {"modo_selector": True})
 
-    # 2) Si pidió el form pero no está logueado, lo mandamos a login y volvemos acá
+    # 2) Si pidió el form pero no está logueado, a login con next
     if not request.user.is_authenticated:
         return redirect(f"{reverse('login:login')}?next={request.get_full_path()}")
 
     # 3) Construcción del form
-    form = PublicarMascotaForm(request.POST or None, request.FILES or None)
+    if request.method == "POST":
+        form = SolicitudPublicacionForm(request.POST, request.FILES)
+        if form.is_valid():
+            # 4) Guardar como pendiente asociando al usuario
+            instancia: SolicitudPublicacion = form.save(commit=False)
+            instancia.usuario = request.user
+            # instancia.estado = "pendiente"  # el modelo ya tiene default, por si acaso
+            instancia.save()
 
-    # 4) Procesamiento
-    if request.method == "POST" and form.is_valid():
-        data = form.cleaned_data
-
-        # Crear la solicitud
-        SolicitudPublicacion.objects.create(
-            usuario=request.user,
-            # Datos de mascota
-            nombre=data["nombre"],
-            tipo=data["tipo"],
-            raza=data["raza"],
-            edad=data["edad"],
-            sexo=data["sexo"],
-            descripcion=data["descripcion"],
-            ubicacion=data["ubicacion"],
-            foto=data["foto"],
-            # Datos de contacto
-            contacto_nombre=data["contacto_nombre"],
-            contacto_email=data["contacto_email"],
-            contacto_direccion=data["contacto_direccion"],
-            contacto_telefono=data["contacto_telefono"],
-            # Seguridad / declaración
-            acepta_declaracion=data["acepta_declaracion"],
-        )
-
-        messages.success(
-            request,
-            "✅ Solicitud enviada con éxito. Un administrador la revisará pronto."
-        )
-        return redirect("registro_mascotas:mis_solicitudes")
+            messages.success(
+                request,
+                "✅ Solicitud enviada con éxito. Un administrador la revisará pronto."
+            )
+            return redirect("registro_mascotas:mis_solicitudes")
+        else:
+            messages.error(request, "Por favor corrige los errores del formulario.")
+    else:
+        # Prefill simple con datos del usuario
+        initial = {
+            "contacto_nombre": getattr(request.user, "username", "") or "",
+            "contacto_email": getattr(request.user, "email", "") or "",
+        }
+        form = SolicitudPublicacionForm(initial=initial)
 
     # 5) Mostrar el formulario incrustado en home con bandera 'modo_publicar'
     return render(request, "portal_mascotas/home.html", {
@@ -70,17 +61,11 @@ def publicar_mascota(request):
 @login_required
 def mis_solicitudes(request):
     """
-    Lista las solicitudes del usuario autenticado con su estado y mensajes
-    (aceptada -> mensaje_aceptacion; rechazada -> motivo_rechazo).
-    IMPORTANTE: el modelo debe tener el campo 'fecha_creacion'.
-                Si en tu modelo se llama distinto (p.ej. 'created_at'),
-                cambia el order_by por ese nombre.
+    Lista las solicitudes del usuario autenticado con su estado y mensajes.
     """
-    qs = (SolicitudPublicacion.objects
-          .filter(usuario=request.user)
-          .order_by("-fecha_creacion"))  # <-- Cambia a "-created_at" si tu campo se llama así.
-
-    return render(request, "registro_mascotas/mis_solicitudes.html", {
-        "solicitudes": qs
-    })
-
+    qs = (
+        SolicitudPublicacion.objects
+        .filter(usuario=request.user)
+        .order_by("-fecha_creacion")
+    )
+    return render(request, "registro_mascotas/mis_solicitudes.html", {"solicitudes": qs})
