@@ -1,5 +1,44 @@
 // JavaScript principal del Portal de Mascotas
 
+// ========= Toggle Descripciones (exportado global) =========
+function initDescToggles() {
+  document.querySelectorAll('.toggle-desc').forEach(btn => {
+    // Evita doble-bound si el template también llama:
+    if (btn.dataset.bound === '1') return;
+    btn.dataset.bound = '1';
+
+    const id = btn.dataset.target;
+    const el = document.getElementById(id);
+    if (!el) return;
+
+    const hasOverflow = () => (el.scrollHeight - el.clientHeight) > 1;
+
+    const updateVisibility = () => {
+      btn.style.display = hasOverflow() ? '' : 'none';
+    };
+
+    // Primer chequeo cuando ya hay layout:
+    requestAnimationFrame(updateVisibility);
+
+    // Asegura tras fuentes/imagenes (si las hubiese):
+    window.addEventListener('load', updateVisibility, { once: true });
+
+    // Reaccionar a cambios de tamaño/contenido:
+    if ('ResizeObserver' in window) {
+      const ro = new ResizeObserver(updateVisibility);
+      ro.observe(el);
+    }
+
+    btn.addEventListener('click', () => {
+      const expanded = el.classList.toggle('expanded');
+      btn.textContent = expanded ? 'Ver menos' : 'Ver más';
+      btn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+    });
+  });
+}
+window.initDescToggles = initDescToggles;
+
+// =================== Arranque ===================
 document.addEventListener('DOMContentLoaded', () => {
   // Inicializar funcionalidades existentes
   initFormValidation();
@@ -9,33 +48,14 @@ document.addEventListener('DOMContentLoaded', () => {
   // Mobile nav (nuevo header)
   const btn = document.querySelector('[data-nav-toggle]');
   const nav = document.querySelector('[data-nav]');
-  if (btn && nav) {
-    btn.addEventListener('click', () => nav.classList.toggle('is-open'));
-  }
+  if (btn && nav) btn.addEventListener('click', () => nav.classList.toggle('is-open'));
 
-  // “Ver más / Ver menos” de descripciones (coincide con home.html)
-  document.querySelectorAll('.toggle-desc').forEach(btn => {
-    const id = btn.dataset.target;
-    const el = document.getElementById(id);
-    if (!el) return;
-
-    // si no hay overflow, ocultamos el botón
-    requestAnimationFrame(() => {
-      if (el.scrollHeight <= el.clientHeight + 1) btn.style.display = 'none';
-    });
-
-    btn.addEventListener('click', () => {
-      el.classList.toggle('expanded');
-      btn.textContent = el.classList.contains('expanded') ? 'Ver menos' : 'Ver más';
-    });
-  });
+  // Descripciones “ver más / ver menos”
+  initDescToggles();
 
   // Autosize de textarea (mensaje opcional en solicitud rápida)
-  const autosize = ta => {
-    ta.style.height = 'auto';
-    ta.style.height = Math.min(ta.scrollHeight, 260) + 'px';
-  };
-  document.querySelectorAll('textarea.msg-optional').forEach(ta => {
+  const autosize = ta => { ta.style.height = 'auto'; ta.style.height = Math.min(ta.scrollHeight, 260) + 'px'; };
+  document.querySelectorAll('textarea.msg-optional, .js-autosize').forEach(ta => {
     autosize(ta);
     ta.addEventListener('input', () => autosize(ta));
   });
@@ -121,7 +141,6 @@ function hideTooltip() {
 // Animaciones suaves
 // =======================
 function initAnimations() {
-  // Animar tarjetas reales que existen en el sitio
   const cards = document.querySelectorAll('.pet-card, .feature-card');
   if (!cards.length) return;
 

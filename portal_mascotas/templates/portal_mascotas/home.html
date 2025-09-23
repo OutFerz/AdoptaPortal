@@ -126,7 +126,7 @@
   {# ================== HOME NORMAL ================== #}
 
   <style>
-    /* ====== Filtros (layout ordenado en 2 filas) ====== */
+    /* ====== Filtros ====== */
     .filters{
       display:grid;grid-template-columns:repeat(12,minmax(0,1fr));
       gap:12px;align-items:end;margin-bottom:18px
@@ -166,9 +166,34 @@
     .pet-name{margin:0;font-size:1.15rem;font-weight:700;color:#111827}
     .pet-meta{margin:0;color:#6b7280;font-size:.95rem}
 
-    .pet-desc{margin:4px 0 0;color:#4b5563;font-size:.95rem;line-height:1.35;display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden}
-    .pet-desc.expanded{-webkit-line-clamp:unset;max-height:none}
-    .toggle-desc{background:none;border:0;color:#2563eb;cursor:pointer;padding:0;font-weight:600;align-self:flex-start}
+    /* ====== Descripción con clamp robusto ====== */
+    .pet-desc{
+      --lines:5;
+      --lh:1.4;
+      margin:4px 0 0;
+      color:#4b5563;
+      font-size:.95rem;
+      line-height:var(--lh);
+
+      /* Límite real detectable por JS: */
+      max-height:calc(1em * var(--lh) * var(--lines));
+      overflow:hidden;
+
+      /* Clamp bonito en WebKit: */
+      display:-webkit-box;
+      -webkit-box-orient:vertical;
+      -webkit-line-clamp:var(--lines);
+    }
+    .pet-desc.expanded{
+      max-height:none;
+      display:block;
+      -webkit-line-clamp:unset;
+      overflow:visible;
+    }
+
+    .toggle-desc{
+      background:none;border:0;color:#2563eb;cursor:pointer;padding:0;font-weight:600;align-self:flex-start
+    }
 
     .msg-optional{width:100%;min-height:64px;max-height:260px;padding:10px 12px;border:1px solid #D1D5DB;border-radius:8px;resize:none;overflow:auto}
     .pet-actions{margin-top:auto;display:flex;flex-direction:column;align-items:stretch;gap:10px}
@@ -239,13 +264,20 @@
               <p class="pet-meta">{{ m.get_tipo_display }} • {{ m.edad }} meses • {{ m.get_sexo_display }}</p>
 
               <div class="pet-desc" id="desc-{{ m.id }}">{{ m.descripcion|default:"Sin descripción" }}</div>
-              <button class="toggle-desc" data-target="desc-{{ m.id }}" type="button">Ver más</button>
+              <button
+                class="toggle-desc"
+                data-target="desc-{{ m.id }}"
+                type="button"
+                aria-controls="desc-{{ m.id }}"
+                aria-expanded="false">
+                Ver más
+              </button>
 
               {% if request.user.is_authenticated %}
                 <form method="post" action="{% url 'solicitud_adopcion:crear_rapida' m.id %}" class="pet-actions">
                   {% csrf_token %}
                   <button class="btn btn-primary" type="submit">Solicitar adopción</button>
-                  <textarea class="msg-optional" name="mensaje" placeholder="Mensaje para la adopción (opcional)"></textarea>
+                  <textarea class="msg-optional js-autosize" name="mensaje" placeholder="Mensaje para la adopción (opcional)"></textarea>
                 </form>
               {% else %}
                 <div class="pet-actions">
@@ -261,21 +293,9 @@
     {% endif %}
   </div>
 
+  {# Llamada defensiva por si el JS se cachea: #}
   <script>
-  document.addEventListener('DOMContentLoaded', function(){
-    document.querySelectorAll('.toggle-desc').forEach(function(btn){
-      var id = btn.getAttribute('data-target');
-      var el = document.getElementById(id);
-      if(el && el.scrollHeight <= el.clientHeight + 1){ btn.style.display = 'none'; }
-      btn.addEventListener('click', function(){
-        if(!el) return;
-        el.classList.toggle('expanded');
-        btn.textContent = el.classList.contains('expanded') ? 'Ver menos' : 'Ver más';
-      });
-    });
-    const autosize = ta => { ta.style.height='auto'; ta.style.height=Math.min(ta.scrollHeight,260)+'px'; };
-    document.querySelectorAll('textarea.msg-optional').forEach(ta=>{ autosize(ta); ta.addEventListener('input', ()=>autosize(ta)); });
-  });
+    window.initDescToggles && window.initDescToggles();
   </script>
 
 {% endif %} {# /ELSE (home normal) #}
