@@ -141,3 +141,5 @@ staticfiles/
 # Media: ignora todo salvo las fotos de mascotas
 *.pyc
 run_log.txt
+db.sqlite3
+media/
