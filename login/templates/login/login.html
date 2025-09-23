@@ -2,51 +2,72 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ titulo }} - Portal de Mascotas</title>
-    <link rel="stylesheet" href="{% static 'css/main.css' %}">
-    <link rel="stylesheet" href="{% static 'css/auth.css' %}">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ titulo }} - Portal de Mascotas</title>
+  <link rel="stylesheet" href="{% static 'css/main.css' %}">
+  <link rel="stylesheet" href="{% static 'css/auth.css' %}">
 </head>
 <body>
-    <div class="auth-container">
-        <div class="auth-card">
-            <div class="auth-header">
-                <h1>🐕 Portal de Mascotas</h1>
-                <p>Inicia sesión para continuar</p>
-            </div>
+  <div class="auth-container">
+    <div class="auth-card">
+      <div class="auth-header">
+        <h1>🐕 Portal de Mascotas</h1>
+        <p>Inicia sesión para continuar</p>
+      </div>
 
-            {% if messages %}
-                <div class="auth-messages">
-                    {% for message in messages %}
-                        <div class="auth-message {{ message.tags }}">{{ message }}</div>
-                    {% endfor %}
-                </div>
-            {% endif %}
-
-            <form method="post" class="auth-form login-form">
-                {% csrf_token %}
-                <div class="form-group">
-                    <label for="username">Usuario o Correo:</label>
-                    <input type="text" id="username" name="username" required placeholder="Usuario o correo electrónico">
-                </div>
-                
-                <div class="form-group">
-                    <label for="password">Contraseña:</label>
-                    <input type="password" id="password" name="password" required>
-                </div>
-                
-                <button type="submit" class="auth-btn btn-login">Iniciar Sesión</button>
-            </form>
-
-            <div class="auth-links">
-                <p>¿No tienes cuenta? <a href="{% url 'login:register' %}">Registrarse</a></p>
-                <p><a href="{% url 'home' %}" class="back-link">← Volver al inicio</a></p>
-            </div>
+      {% if messages %}
+        <div class="auth-messages">
+          {% for message in messages %}
+            <div class="auth-message {{ message.tags }}">{{ message }}</div>
+          {% endfor %}
         </div>
-    </div>
+      {% endif %}
 
-    <script src="{% static 'js/main.js' %}"></script>
-    <script src="{% static 'js/auth.js' %}"></script>
+      <form method="post" class="auth-form login-form" action="">
+        {% csrf_token %}
+
+        <!-- Mantiene la redirección cuando venimos con ?next=... -->
+        <input type="hidden" name="next" value="{{ request.GET.next|default:'' }}">
+
+        <div class="form-group">
+          <label for="username">Usuario o Correo:</label>
+          <input
+            type="text"
+            id="username"
+            name="username"
+            required
+            placeholder="Usuario o correo electrónico"
+            autocomplete="username"
+            inputmode="email"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="password">Contraseña:</label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            required
+            autocomplete="current-password"
+          >
+        </div>
+
+        <button type="submit" class="auth-btn btn-login">Iniciar Sesión</button>
+      </form>
+
+      <div class="auth-links">
+        <p>¿No tienes cuenta? <a href="{% url 'login:register' %}">Registrarse</a></p>
+        <p><a href="{% url 'home' %}" class="back-link">← Volver al inicio</a></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ⚠️ Cache-busting para asegurar que cargue el JS actualizado -->
+  <script src="{% static 'js/main.js' %}?v=3"></script>
+  <script src="{% static 'js/auth.js' %}?v=3"></script>
 </body>
 </html>
+
+

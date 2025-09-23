@@ -1,4 +1,4 @@
-// AUTH (login + register)
+// --- AUTH (login + register) v3 cache-bust ---
 document.addEventListener('DOMContentLoaded', () => {
   relaxConstraints();
   setupFormValidation();
@@ -14,10 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
 function setupFormValidation() {
   document.querySelectorAll('.auth-form').forEach(form => {
     form.addEventListener('submit', e => {
-      if (!validateForm(form)) {
-        e.preventDefault();
-        return false;
-      }
+      if (!validateForm(form)) { e.preventDefault(); return false; }
       showLoadingState(form);
     });
   });
@@ -33,35 +30,33 @@ function validateForm(form) {
   return ok;
 }
 
-/* REGLA: solo validar longitud 8+ en registro y únicamente para password1/password2 */
 function validateInput(input) {
   const val = (input.value || '').trim();
-  const form = input.closest('form');
-  const onRegister = isRegisterForm(form);
-
+  const onRegister = isRegisterForm(input.closest('form'));
   let ok = true, msg = '';
 
-  if (input.hasAttribute('required') && !val) {
-    ok = false; msg = 'Este campo es obligatorio';
-  }
+  if (input.hasAttribute('required') && !val) { ok = false; msg = 'Este campo es obligatorio'; }
 
+  // email nativo
   if (ok && input.type === 'email' && val) {
-    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!re.test(val)) { ok = false; msg = 'Ingresa un email válido'; }
+    const emailRx = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRx.test(val)) { ok = false; msg = 'Ingresa un email válido'; }
   }
 
-  if (ok && input.type === 'password' && val) {
-    const isRegPassword = ['password1','password2'].includes(input.name);
-    if (onRegister && isRegPassword && val.length < 8) {
-      ok = false; msg = 'La contraseña debe tener al menos 8 caracteres';
-    }
-    // En login (name="password") NO hay restricción de longitud.
+  // contraseña: solo exigente en registro
+  if (ok && input.type === 'password' && val && onRegister && ['password1','password2'].includes(input.name)) {
+    if (val.length < 8) { ok = false; msg = 'La contraseña debe tener al menos 8 caracteres'; }
   }
 
+  // ✅ username permite email O usuario sin restricciones estrictas
   if (ok && input.name === 'username' && val) {
-    const reUser = /^[a-zA-Z0-9_]+$/;
-    if (!reUser.test(val)) { ok = false; msg = 'Solo letras, números y _'; }
-    else if (val.length < 3) { ok = false; msg = 'Mínimo 3 caracteres'; }
+    if (val.includes('@')) {
+      const emailRx = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRx.test(val)) { ok = false; msg = 'Ingresa un email válido'; }
+    } else {
+      // Si NO es email, solo verificamos que tenga algo (mínimo 1 char).
+      if (val.length < 1) { ok = false; msg = 'Ingresa tu usuario'; }
+    }
   }
 
   paintFieldValidation(input, ok, msg);
@@ -71,26 +66,19 @@ function validateInput(input) {
 function validatePasswordMatch(form) {
   const p1 = form.querySelector('input[name="password1"]');
   const p2 = form.querySelector('input[name="password2"]');
-  if (p1 && p2 && p1.value !== p2.value) {
-    showInputError(p2, 'Las contraseñas no coinciden');
-    return false;
-  }
+  if (p1 && p2 && p1.value !== p2.value) { showInputError(p2, 'Las contraseñas no coinciden'); return false; }
   return true;
 }
 
-function isRegisterForm(form) {
-  return !!(form && form.querySelector('input[name="password2"]'));
-}
+function isRegisterForm(form) { return !!(form && form.querySelector('input[name="password2"]')); }
 
 /* ---------------- realtime ---------------- */
 
 function setupRealTimeValidation() {
   document.querySelectorAll('.auth-form input').forEach(input => {
-    input.addEventListener('blur', function () { validateInput(this); });
-    let t;
-    input.addEventListener('input', function () {
-      clearTimeout(t);
-      t = setTimeout(() => { if (this.value.trim()) validateInput(this); }, 300);
+    input.addEventListener('blur', function(){ validateInput(this); });
+    let t; input.addEventListener('input', function(){
+      clearTimeout(t); t = setTimeout(()=>{ if (this.value.trim()) validateInput(this); }, 200);
     });
   });
 }
@@ -98,45 +86,33 @@ function setupRealTimeValidation() {
 /* ---------------- ui helpers ---------------- */
 
 function paintFieldValidation(input, ok, msg) {
-  const group = input.closest('.form-group');
-  if (!group) return;
-  const prev = group.querySelector('.form-errors');
-  if (prev) prev.remove();
+  const group = input.closest('.form-group'); if (!group) return;
+  const prev = group.querySelector('.form-errors'); if (prev) prev.remove();
 
   if (!ok) {
-    input.classList.add('is-invalid');
-    input.classList.remove('is-valid');
-    const err = document.createElement('div');
-    err.className = 'form-errors';
-    err.textContent = msg;
+    input.classList.add('is-invalid'); input.classList.remove('is-valid');
+    const err = document.createElement('div'); err.className = 'form-errors'; err.textContent = msg;
     input.parentNode.insertBefore(err, input.nextSibling);
   } else {
-    input.classList.add('is-valid');
-    input.classList.remove('is-invalid');
+    input.classList.add('is-valid'); input.classList.remove('is-invalid');
   }
 }
 
-function showInputError(input, message) { paintFieldValidation(input, false, message); }
-
-function clearFormErrors(form) {
-  form.querySelectorAll('.form-errors').forEach(e => e.remove());
-  form.querySelectorAll('input').forEach(i => i.classList.remove('is-invalid','is-valid'));
+function showInputError(input, message){ paintFieldValidation(input, false, message); }
+function clearFormErrors(form){
+  form.querySelectorAll('.form-errors').forEach(e=>e.remove());
+  form.querySelectorAll('input').forEach(i=>i.classList.remove('is-invalid','is-valid'));
 }
 
-function setupMessages() {
-  document.querySelectorAll('.auth-message').forEach(m => {
-    if (m.classList.contains('success')) setTimeout(() => fadeOutMessage(m), 5000);
+function setupMessages(){
+  document.querySelectorAll('.auth-message').forEach(m=>{
+    if (m.classList.contains('success')) setTimeout(()=>{ m.style.transition='opacity .5s'; m.style.opacity='0'; setTimeout(()=>m.remove(),500); }, 5000);
     if (m.classList.contains('error')) {
-      const b = document.createElement('button');
-      b.type = 'button'; b.textContent = '×'; b.className = 'close-btn';
-      b.style.cssText='background:none;border:none;font-size:1.5rem;cursor:pointer;float:right;opacity:.7;';
-      b.onclick = () => m.remove();
-      m.appendChild(b);
+      const b = document.createElement('button'); b.type='button'; b.textContent='×'; b.className='close-btn';
+      b.style.cssText='background:none;border:none;font-size:1.5rem;cursor:pointer;float:right;opacity:.7;'; b.onclick=()=>m.remove(); m.appendChild(b);
     }
   });
 }
-
-function fadeOutMessage(el){ el.style.transition='opacity .5s'; el.style.opacity='0'; setTimeout(()=>el.remove(),500); }
 
 function showLoadingState(form){
   const btn=form.querySelector('.auth-btn'); if(!btn) return;
@@ -154,8 +130,7 @@ function setupAnimations(){
 function setupPasswordToggle(){
   document.querySelectorAll('input[type="password"]').forEach(input=>{
     const g=input.closest('.form-group'); if(!g) return; g.style.position='relative';
-    const btn=document.createElement('button');
-    btn.type='button'; btn.innerHTML='👁️'; btn.className='password-toggle';
+    const btn=document.createElement('button'); btn.type='button'; btn.innerHTML='👁️'; btn.className='password-toggle';
     btn.style.cssText='position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:1rem;';
     btn.onclick=()=>{ input.setAttribute('type', input.getAttribute('type')==='password'?'text':'password'); };
     g.appendChild(btn);
@@ -175,10 +150,17 @@ function preventDoubleSubmit(){
 /* --------------- constraints/native validation --------------- */
 
 function relaxConstraints() {
-  // Desactiva validación nativa en todos los formularios
   document.querySelectorAll('.auth-form').forEach(f => f.setAttribute('novalidate','novalidate'));
-  // Elimina minlength/pattern/title de TODOS los password (usamos nuestra validación JS)
-  document.querySelectorAll('input[type="password"]').forEach(i=>{
-    ['minlength','pattern','title'].forEach(a=>i.removeAttribute(a));
-  });
+  document.querySelectorAll('input[type="password"]').forEach(i=>['minlength','pattern','title'].forEach(a=>i.removeAttribute(a)));
+
+  // Asegura que el username NO tenga pattern ni handlers heredados
+  const u = document.getElementById('username');
+  if (u) {
+    ['pattern','title','minlength','maxlength'].forEach(a=>u.removeAttribute(a));
+    u.onkeypress = null; u.onkeydown = null; u.onkeyup = null;
+  }
+
+  // Marca de versión de JS (para comprobar en consola)
+  console.log('auth.js v3 cargado');
 }
+
