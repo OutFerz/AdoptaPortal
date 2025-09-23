@@ -1,79 +1,106 @@
 {% extends "base.html" %}
 {% load static %}
+
 {% block title %}Blog — Cuidados y Consejos{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'blog/css/blog.css' %}">
+<link rel="stylesheet" href="{% static 'blog/css/blog.css' %}?v={% now 'U' %}">
+<style>
+  /* Evita que capas decorativas tapen el formulario */
+  .blog-hero { position: relative; z-index: 0; }
+  .blog-hero::before, .blog-hero::after { pointer-events: none; }
+  .blog-search { position: relative; z-index: 5; }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'blog/js/blog.js' %}?v={% now 'U' %}" defer></script>
+<script>
+  // Refuerzo: si algo bloquea el submit nativo, lo forzamos al click.
+  document.addEventListener('DOMContentLoaded', function () {
+    const form = document.querySelector('.blog-search');
+    if (!form) return;
+    const btn = form.querySelector('button[type="submit"]');
+    if (btn) {
+      btn.addEventListener('click', function () {
+        form.submit();
+      });
+    }
+  });
+</script>
 {% endblock %}
 
 {% block content %}
-
 <section class="blog-hero">
-  <h2 class="hero-title">📝 Blog de cuidados y consejos</h2>
-  <p class="hero-description">Encuentra guías, tips y buenas prácticas para el bienestar de tus mascotas.</p>
+  <div class="blog-hero__icon" aria-hidden="true">
+    <svg viewBox="0 0 48 48"><path fill="currentColor" d="M20.3 25.6c-2.6.5-4.6 2.7-4.6 5.3c0 3 2.4 5.4 5.4 5.4c1.6 0 3-.7 4-1.8c1 1.1 2.4 1.8 4 1.8c3 0 5.4-2.4 5.4-5.4c0-2.6-1.9-4.8-4.6-5.3c-2.4-.4-4.6-1.1-6.4-2.1c-1.8 1-4 1.7-6.4 2.1zM13.8 20.7a4.3 4.3 0 1 0 0-8.6a4.3 4.3 0 0 0 0 8.6zm20.4 0a4.3 4.3 0 1 0 0-8.6a4.3 4.3 0 0 0 0 8.6zM23.4 18a5 5 0 1 0 0-10a5 5 0 0 0 0 10zm1.2 0a5 5 0 1 0 0-10a5 5 0 0 0 0 10z"/></svg>
+  </div>
+  <h1 class="blog-hero__title">Blog de cuidados y consejos</h1>
+  <p class="blog-hero__subtitle">Encuentra guías, tips y buenas prácticas para el bienestar de tus mascotas.</p>
+
+  <!-- IMPORTANTE: acción directa al listado y novalidate -->
+  <form class="blog-search" method="get" action="{% url 'blog:post_list' %}" novalidate data-autosubmit>
+    <input class="blog-search__input" type="search" name="q" value="{{ q|default:'' }}" placeholder="Buscar por título, tema o etiqueta…">
+    <button class="btn btn--primary" type="submit">Buscar</button>
+  </form>
+
+  {% if q or tag or cat %}
+    <div class="active-filters" style="margin-top:.6rem">
+      {% if q %}<span class="chip chip--hero">🔎 {{ q }}</span>{% endif %}
+      {% if tag %}<span class="chip chip--hero">🏷️ {{ tag }}</span>{% endif %}
+      {% if cat %}<span class="chip chip--hero">📂 {{ cat }}</span>{% endif %}
+      <a class="btn btn--ghost" href="{% url 'blog:post_list' %}">Quitar filtros</a>
+    </div>
+  {% endif %}
 </section>
 
-<form method="get" class="search" data-autosubmit style="margin-bottom: 1.5rem;">
-  <input type="search" name="q" value="{{ q|default:'' }}" placeholder="Buscar por título o contenido…" />
-  <button class="btn">Buscar</button>
-</form>
-
-{% if q or tag or cat %}
-  <div class="active-filters" style="margin-bottom:1rem;">
-    <strong>Filtros activos:</strong>
-    {% if q %}<span class="chip">🔎 "{{ q }}"</span>{% endif %}
-    {% if tag %}<span class="chip">🏷️ etiqueta: {{ tag }}</span>{% endif %}
-    {% if cat %}<span class="chip">📂 categoría: {{ cat }}</span>{% endif %}
-    <a class="link-reset" href="{% url 'blog:post_list' %}">Quitar filtros</a>
-  </div>
-{% endif %}
-
 {% if posts %}
-  <div class="post-grid">
+  <section class="posts-grid">
     {% for post in posts %}
-      <article class="post-card card">
-        <a class="thumb" href="{% url 'blog:post_detail' post.slug %}">
+      <article class="post-card js-reveal">
+        <a class="post-card__media" href="{% url 'blog:post_detail' post.slug %}">
           {% if post.hero_image %}
-            <img src="{{ post.hero_image.url }}" alt="Imagen de {{ post.title }}">
+            <img loading="lazy" src="{{ post.hero_image.url }}" alt="Imagen de {{ post.title }}">
           {% else %}
-            <img src="{% static 'blog/img/default-cat.svg' %}" alt="Imagen por defecto">
+            <img loading="lazy" src="{% static 'blog/img/default-cat.svg' %}" alt="Imagen por defecto">
           {% endif %}
         </a>
 
-        <div class="post-body">
-          <h3 class="post-title">
-            <a href="{% url 'blog:post_detail' post.slug %}">{{ post.title }}</a>
-          </h3>
-
-          <div class="post-meta">
-            <span>📂 <a href="{% url 'blog:post_list' %}?cat={{ post.category.slug }}">{{ post.category.name }}</a></span>
-            {% if post.published_at %} ·
-              <time datetime="{{ post.published_at|date:'c' }}">📅 {{ post.published_at|date:"d M Y" }}</time>
+        <div class="post-card__body">
+          <div class="post-card__meta">
+            {% if post.category %}
+              <a class="link-muted" href="{% url 'blog:post_list' %}?cat={{ post.category.slug }}">{{ post.category.name }}</a>
+              <span class="dot">•</span>
             {% endif %}
-            · 👤 {{ post.author.username }}
+            {% if post.published_at %}
+              <time datetime="{{ post.published_at|date:'c' }}">{{ post.published_at|date:"d M Y" }}</time>
+              <span class="dot">•</span>
+            {% endif %}
+            {% if post.author %}
+              <span class="muted">por {{ post.author.username|default:post.author }}</span>
+            {% endif %}
           </div>
 
-          <p class="post-excerpt">
+          <h2 class="post-card__title">
+            <a href="{% url 'blog:post_detail' post.slug %}">{{ post.title }}</a>
+          </h2>
+
+          <p class="post-card__excerpt">
             {{ post.content|striptags|truncatewords:40 }}
           </p>
 
           {% if post.tags.all %}
-            <div class="tags">
+            <div class="post-card__tags">
               {% for t in post.tags.all %}
-                <a class="tag" href="{% url 'blog:post_list' %}?tag={{ t.slug }}">#{{ t.name }}</a>
+                <a class="chip chip--ghost" href="{% url 'blog:post_list' %}?tag={{ t.slug }}">#{{ t.name }}</a>
               {% endfor %}
             </div>
           {% endif %}
         </div>
       </article>
     {% endfor %}
-  </div>
+  </section>
 {% else %}
-  <p>No hay publicaciones que coincidan con tu búsqueda.</p>
+  <p class="empty">No se encontraron artículos para tu búsqueda.</p>
 {% endif %}
-
-{% endblock %}
-
-{% block extra_js %}
-<script src="{% static 'blog/js/blog.js' %}"></script>
 {% endblock %}

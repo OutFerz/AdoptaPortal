@@ -3,105 +3,118 @@
 {% block title %}{{ post.title }} — Blog{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'blog/css/blog.css' %}">
+<link rel="stylesheet" href="{% static 'blog/css/blog.css' %}?v={% now 'U' %}">
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'blog/js/blog.js' %}?v={% now 'U' %}" defer></script>
 {% endblock %}
 
 {% block content %}
+<div id="readProgress" class="read-progress" aria-hidden="true"></div>
 
-<nav class="breadcrumbs" style="margin-bottom: 1rem;">
-  <a href="{% url 'blog:post_list' %}">← Volver al blog</a>
+<nav class="breadcrumbs">
+  <a class="crumb" href="{% url 'blog:post_list' %}">← Volver al blog</a>
+  {% if post.category %}
+    <span class="crumb">/</span>
+    <a class="crumb" href="{% url 'blog:post_list' %}?cat={{ post.category.slug }}">{{ post.category.name }}</a>
+  {% endif %}
+  <span class="crumb is-current">/ {{ post.title }}</span>
 </nav>
 
 <article class="post-detail">
-  <header class="post-header">
-    <h1 class="post-title">{{ post.title }}</h1>
-    <div class="post-meta">
-      <span>📂 <a href="{% url 'blog:post_list' %}?cat={{ post.category.slug }}">{{ post.category.name }}</a></span>
-      {% if post.published_at %} ·
-        <time datetime="{{ post.published_at|date:'c' }}">📅 {{ post.published_at|date:"d M Y" }}</time>
+  <header class="article-hero">
+    <figure class="article-hero__media">
+      {% if post.hero_image %}
+        <img src="{{ post.hero_image.url }}" alt="Imagen de {{ post.title }}">
+      {% else %}
+        <img src="{% static 'blog/img/default-cat.svg' %}" alt="Imagen por defecto">
       {% endif %}
-      · 👤 {{ post.author.username }}
+    </figure>
+    <div class="article-hero__overlay" aria-hidden="true"></div>
+    <div class="article-hero__content">
+      <div class="post-meta post-meta--on-hero">
+        {% if post.category %}<span class="chip">{{ post.category.name }}</span>{% endif %}
+        {% if post.published_at %}<span class="chip">{{ post.published_at|date:"d M Y" }}</span>{% endif %}
+        {% if post.author %}<span class="chip">por {{ post.author.username|default:post.author }}</span>{% endif %}
+        <span class="chip" data-readtime>⏱️</span>
+      </div>
+      <h1 class="post-title">{{ post.title }}</h1>
+      <div class="post-quick">
+        <button class="btn btn--ghost" type="button" data-copy-link data-url="{{ request.build_absolute_uri }}">Copiar enlace</button>
+        {% if post.tags.all %}
+          <div class="post-card__tags">
+            {% for t in post.tags.all %}
+              <a class="chip chip--ghost" href="{% url 'blog:post_list' %}?tag={{ t.slug }}">#{{ t.name }}</a>
+            {% endfor %}
+          </div>
+        {% endif %}
+      </div>
     </div>
   </header>
 
-  <figure class="post-hero">
-    {% if post.hero_image %}
-      <img src="{{ post.hero_image.url }}" alt="Imagen de {{ post.title }}">
-    {% else %}
-      <img src="{% static 'blog/img/default-cat.svg' %}" alt="Imagen por defecto">
-    {% endif %}
-  </figure>
-
-  <section class="post-content">
-    {{ post.content|linebreaksbr }}
+  <section id="postContent" class="prose">
+    {{ post.content|safe }}
   </section>
 
-  {% if post.tags.all %}
-    <footer class="post-footer">
-      <div class="tags">
-        <strong>Etiquetas:</strong>
-        {% for t in post.tags.all %}
-          <a class="tag" href="{% url 'blog:post_list' %}?tag={{ t.slug }}">#{{ t.name }}</a>
-        {% endfor %}
-      </div>
-    </footer>
-  {% endif %}
+  <footer class="post-footer">
+    <hr class="sep">
+    <div class="post-pager">
+      <a class="pager" href="{% url 'blog:post_list' %}">← Ver más publicaciones</a>
+    </div>
+  </footer>
 </article>
 
-<hr style="margin: 2rem 0;">
+<hr class="sep">
 
-<section id="comments">
-  <h2 style="margin-bottom: 1rem;">💬 Comentarios ({{ comments|length }})</h2>
+<section id="comments" class="comments">
+  <h2 class="section-title">💬 Comentarios ({{ comments|length }})</h2>
 
   {% if messages %}
-    <div class="auth-messages" style="margin-bottom:1rem;">
+    <div class="flash">
       {% for message in messages %}
-        <div class="auth-message {% if message.tags %}{{ message.tags }}{% endif %}">{{ message }}</div>
+        <div class="flash__item {{ message.tags }}">{{ message }}</div>
       {% endfor %}
     </div>
   {% endif %}
 
   {% if comments %}
-    <ul style="list-style:none; padding:0; display:grid; gap:12px; margin-bottom:1.5rem;">
+    <ul class="comment-list">
       {% for c in comments %}
-        <li style="background:#fff; border:1px solid #eee; border-radius:12px; padding:1rem;">
-          <div style="font-weight:600;">{{ c.name }} <span style="opacity:.6;">— {{ c.created_at|date:"d M Y H:i" }}</span></div>
-          <div style="margin-top:.5rem;">{{ c.body|linebreaksbr }}</div>
+        <li class="comment">
+          <div class="comment__head">
+            <span class="comment__author">{{ c.name }}</span>
+            <span class="comment__date">— {{ c.created_at|date:"d M Y H:i" }}</span>
+          </div>
+          <div class="comment__body">{{ c.body|linebreaksbr }}</div>
         </li>
       {% endfor %}
     </ul>
   {% else %}
-    <p>¡Sé el primero en comentar!</p>
+    <p class="muted">¡Sé el primero en comentar!</p>
   {% endif %}
 
-  <h3 style="margin: 1rem 0;">✍️ Deja tu comentario</h3>
-  <form method="post" class="auth-form" style="max-width:720px;">
+  <h3 class="section-subtitle">✍️ Deja tu comentario</h3>
+  <form method="post" class="comment-form">
     {% csrf_token %}
-    <div class="form-group">
-      <label for="id_name">Nombre</label>
-      {{ form.name }}
-      {% if form.name.errors %}<div class="form-errors">{{ form.name.errors|striptags }}</div>{% endif %}
+    <div class="form-row">
+      <div class="form-field">
+        <label for="id_name">Nombre</label>
+        {{ form.name }}
+        {% if form.name.errors %}<div class="form-errors">{{ form.name.errors|striptags }}</div>{% endif %}
+      </div>
+      <div class="form-field">
+        <label for="id_email">Email</label>
+        {{ form.email }}
+        {% if form.email.errors %}<div class="form-errors">{{ form.email.errors|striptags }}</div>{% endif %}
+      </div>
     </div>
-    <div class="form-group">
-      <label for="id_email">Email</label>
-      {{ form.email }}
-      {% if form.email.errors %}<div class="form-errors">{{ form.email.errors|striptags }}</div>{% endif %}
-    </div>
-    <div class="form-group">
+    <div class="form-field">
       <label for="id_body">Comentario</label>
       {{ form.body }}
       {% if form.body.errors %}<div class="form-errors">{{ form.body.errors|striptags }}</div>{% endif %}
     </div>
-    <button class="auth-btn btn-login" type="submit">Publicar comentario</button>
+    <button class="btn btn--primary" type="submit">Publicar comentario</button>
   </form>
 </section>
-
-<section class="back-to-blog" style="margin-top:2rem;">
-  <a class="feature-link" href="{% url 'blog:post_list' %}">← Ver más publicaciones</a>
-</section>
-
-{% endblock %}
-
-{% block extra_js %}
-<script src="{% static 'blog/js/blog.js' %}"></script>
 {% endblock %}
