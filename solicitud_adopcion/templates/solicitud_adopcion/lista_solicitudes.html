@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ titulo|default:"Mis Solicitudes" }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .sl-hero{background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:22px 24px;
+           box-shadow:0 8px 24px rgba(16,185,129,.06),inset 0 1px 0 rgba(255,255,255,.5)}
+  .sl-hero h1{margin:0 0 6px;font-size:2rem}
+  .sl-hero p{margin:0;color:#6b7280}
+
+  .sl-actions{display:flex;gap:10px;margin:14px 0 0}
+  .sl-btn{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:10px;
+          border:1px solid #e5e7eb;background:#fff;color:#111827;font-weight:600;text-decoration:none}
+  .sl-btn:hover{background:#f8fafc}
+
+  .sl-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px;margin-top:16px}
+  .sl-card{grid-column:span 6;background:#fff;border:1px solid #e5e7eb;border-radius:14px;overflow:hidden;
+           display:flex;gap:16px;box-shadow:0 4px 10px rgba(0,0,0,.04)}
+  @media (max-width:960px){ .sl-card{grid-column:span 12} }
+
+  .sl-thumb{width:180px;min-height:140px;background:#f3f4f6;flex:0 0 180px}
+  .sl-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+
+  .sl-body{padding:14px 16px 16px;display:flex;flex-direction:column;gap:8px;flex:1}
+  .sl-title{margin:0;font-size:1.1rem;font-weight:800}
+  .sl-meta{color:#6b7280;font-size:.95rem}
+  .sl-msg{color:#374151}
+  .sl-foot{margin-top:auto;display:flex;justify-content:space-between;align-items:center;gap:10px}
+
+  .sl-badge{display:inline-flex;align-items:center;gap:8px;border-radius:999px;font-size:.85rem;font-weight:800;padding:6px 10px}
+  .sl-badge--pend{background:#fff7ed;color:#9a3412;border:1px solid #fdba74}
+  .sl-badge--ok{background:#ecfdf5;color:#065f46;border:1px solid #34d399}
+  .sl-badge--no{background:#fef2f2;color:#991b1b;border:1px solid #f87171}
+
+  .sl-link{font-weight:700;color:#0ea5e9;text-decoration:none}
+  .sl-link:hover{text-decoration:underline}
+
+  .sl-empty{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:24px;text-align:center;color:#6b7280}
+  .sl-cta{display:inline-block;margin-top:10px;background:#10b981;color:#fff;padding:10px 14px;border-radius:10px;
+          font-weight:700;text-decoration:none}
+  .sl-cta:hover{filter:brightness(.95)}
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="sl-hero">
+  <h1>{{ titulo|default:"Mis Solicitudes" }}</h1>
+  <p>Gestiona tus solicitudes de adopción de mascotas.</p>
+  <div class="sl-actions">
+    <a class="sl-btn" href="{% url 'home' %}">🏠 Volver al inicio</a>
+  </div>
+</section>
+
+{% if solicitudes %}
+  <section class="sl-grid">
+    {% for s in solicitudes %}
+      <article class="sl-card">
+        <div class="sl-thumb">
+          {% if s.mascota.foto %}
+            <img src="{{ s.mascota.foto.url }}" alt="{{ s.mascota.nombre }}">
+          {% else %}
+            <img src="{% static 'img/placeholder_pet.jpg' %}" alt="Mascota">
+          {% endif %}
+        </div>
+
+        <div class="sl-body">
+          <h3 class="sl-title">{{ s.mascota.nombre }}</h3>
+          <div class="sl-meta">
+            {{ s.mascota.get_tipo_display }} • {{ s.mascota.edad }} meses • {{ s.mascota.get_sexo_display }}
+          </div>
+
+          <p class="sl-msg">
+            {{ s.mensaje|default:"(Sin mensaje)" }}
+          </p>
+
+          {% if s.estado == 'aprobada' and s.respuesta %}
+            <p class="sl-msg">✅ <strong>Respuesta:</strong> {{ s.respuesta }}</p>
+          {% elif s.estado == 'rechazada' and s.respuesta %}
+            <p class="sl-msg">❌ <strong>Motivo:</strong> {{ s.respuesta }}</p>
+          {% endif %}
+
+          <div class="sl-foot">
+            <div>
+              {% if s.estado == 'aprobada' %}
+                <span class="sl-badge sl-badge--ok">Aprobada</span>
+              {% elif s.estado == 'rechazada' %}
+                <span class="sl-badge sl-badge--no">Rechazada</span>
+              {% else %}
+                <span class="sl-badge sl-badge--pend">Pendiente</span>
+              {% endif %}
+            </div>
+
+            <div style="text-align:right">
+              <div class="sl-meta">Enviada: {{ s.fecha_solicitud|date:"d M Y H:i" }}</div>
+              <a class="sl-link" href="{% url 'solicitud_adopcion:detalle_solicitud' s.id %}">Ver detalle →</a>
+            </div>
+          </div>
+        </div>
+      </article>
+    {% endfor %}
+  </section>
+{% else %}
+  <div class="sl-empty">
+    🐕 <strong>No tienes solicitudes de adopción</strong><br>
+    <span>Comienza creando tu primera solicitud desde el listado de mascotas.</span><br>
+    <a class="sl-cta" href="{% url 'home' %}">Ver mascotas</a>
+  </div>
+{% endif %}
+{% endblock %}

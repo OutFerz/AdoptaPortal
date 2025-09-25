@@ -1,0 +1,118 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#2e7d32">
+  <title>{% block title %}Portal de Mascotas{% endblock %}</title>
+
+  <!-- CSS global -->
+  <link rel="stylesheet" href="{% static 'css/main.css' %}?v=1.1">
+
+  <!-- Micro estilos -->
+  <style>
+    .ap-nav-link.is-active{background:rgba(255,255,255,.16);box-shadow:inset 0 -2px 0 rgba(255,255,255,.6)}
+    .ap-subheader{background:linear-gradient(180deg,rgba(255,255,255,.12),transparent);padding:18px 0;margin-top:-6px}
+    .ap-subheader .ap-title{margin:0;font-weight:900;letter-spacing:.2px}
+  </style>
+
+  {% block extra_css %}{% endblock %}
+</head>
+<body class="ap-body">
+
+  <!-- HEADER -->
+  <header class="ap-header">
+    <div class="ap-container ap-header-bar">
+      <a class="ap-brand" href="{% url 'home' %}" aria-label="Ir al inicio">
+        <span class="ap-brand-emoji" aria-hidden="true">🐾</span>
+        <span class="ap-brand-text">Portal de Mascotas</span>
+      </a>
+
+      <button class="ap-nav-toggle" aria-label="Abrir menú" data-nav-toggle>
+        <span></span><span></span><span></span>
+      </button>
+
+      <nav class="ap-nav" data-nav>
+        {% with current=request.resolver_match.url_name %}
+        <ul class="ap-nav-list">
+          <li><a class="ap-nav-link {% if current == 'home' %}is-active{% endif %}" href="{% url 'home' %}" aria-current="{% if current == 'home' %}page{% endif %}">Inicio</a></li>
+          <li><a class="ap-nav-link {% if current == 'lista_solicitudes' %}is-active{% endif %}" href="{% url 'solicitud_adopcion:lista_solicitudes' %}" aria-current="{% if current == 'lista_solicitudes' %}page{% endif %}">Solicitudes</a></li>
+
+          <li>
+            {% if request.user.is_authenticated %}
+              <a class="ap-nav-link {% if current == 'publicar_mascota' %}is-active{% endif %}" href="{% url 'registro_mascotas:publicar_mascota' %}">Publicar mascota</a>
+            {% else %}
+              <a class="ap-nav-link" href="{% url 'login:login' %}?next={% url 'registro_mascotas:publicar_mascota' %}">Publicar mascota</a>
+            {% endif %}
+          </li>
+
+          <li><a class="ap-nav-link {% if request.path|slice:':6' == '/blog/' %}is-active{% endif %}" href="/blog/">Blog</a></li>
+
+          {% if request.user.is_authenticated and request.user.is_staff %}
+            <li><a class="ap-nav-link" href="{% url 'admin:index' %}">Admin</a></li>
+          {% endif %}
+        </ul>
+        {% endwith %}
+      </nav>
+
+      <div class="ap-user">
+        {% if request.user.is_authenticated %}
+          <span class="ap-user-pill">Hola, {{ request.user.username }}</span>
+          <a class="ap-btn ap-btn-danger" href="{% url 'login:logout' %}">Cerrar sesión</a>
+        {% else %}
+          <a class="ap-btn ap-btn-primary" href="{% url 'login:login' %}">Iniciar sesión</a>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="ap-header-shadow" aria-hidden="true"></div>
+
+    {% block subheader %}{% endblock %}
+  </header>
+
+  <!-- MENSAJES -->
+  {% if messages %}
+  <div class="ap-container ap-mt-12">
+    {% for message in messages %}
+      <div class="ap-alert ap-alert--{{ message.tags|default:'info' }}">🐾 {{ message }}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- CONTENIDO -->
+  <main class="ap-main">
+    <div class="ap-container">
+      {% block content %}{% endblock %}
+    </div>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="ap-footer">
+    <div class="ap-container">
+      <div class="ap-footer-grid">
+        <div>
+          <div class="ap-brand foot"><span>🐾</span> Portal de Mascotas</div>
+          <p class="ap-foot-note">Encuentra, publica y gestiona adopciones con facilidad.</p>
+        </div>
+
+        <div class="ap-foot-contact">
+          <div class="ap-foot-item">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v.01L12 12 4 6.01V6Zm16 12V8.24l-7.4 5.18a1 1 0 0 1-1.2 0L4 8.24V18a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2Z"/></svg>
+            <a href="mailto:adoptaportal@gmail.com">adoptaportal@gmail.com</a>
+          </div>
+          <div class="ap-foot-item">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.6 10.8a15.7 15.7 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1.02-.24c1.18.38 2.4.58 3.62.58a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1C11.7 21 3 12.3 3 2a1 1 0 0 1 1-1h3.48a1 1 0 0 1 1 1c0 1.23.2 2.45.58 3.62a1 1 0 0 1-.24 1.02L6.6 10.8Z"/></svg>
+            <a href="tel:+56912345678">+56 9 1234 5678</a>
+          </div>
+        </div>
+      </div>
+      <p class="ap-copy">© {% now "Y" %} Portal de Mascotas</p>
+    </div>
+  </footer>
+
+  <!-- JS global -->
+  <script src="{% static 'js/main.js' %}?v=1.1"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

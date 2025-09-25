@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ titulo|default:"Detalle de solicitud" }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .sd-wrap{display:grid;grid-template-columns:320px 1fr;gap:18px}
+  @media (max-width:960px){ .sd-wrap{grid-template-columns:1fr} }
+
+  .sd-card{background:#fff;border:1px solid #e5e7eb;border-radius:14px;box-shadow:0 4px 10px rgba(0,0,0,.04)}
+  .sd-media img{width:100%;height:auto;border-top-left-radius:14px;border-top-right-radius:14px}
+  .sd-body{padding:16px}
+
+  .sd-title{margin:0 0 6px;font-size:1.4rem;font-weight:800}
+  .sd-meta{color:#6b7280}
+
+  .sd-badge{display:inline-flex;align-items:center;gap:8px;border-radius:999px;font-size:.85rem;font-weight:800;padding:6px 10px}
+  .sd-ok{background:#ecfdf5;color:#065f46;border:1px solid #34d399}
+  .sd-no{background:#fef2f2;color:#991b1b;border:1px solid #f87171}
+  .sd-pend{background:#fff7ed;color:#9a3412;border:1px solid #fdba74}
+
+  .sd-msg{background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:12px}
+  .sd-actions{display:flex;gap:10px;margin-top:12px}
+  .btn{display:inline-block;padding:10px 14px;border-radius:10px;border:0;font-weight:700;cursor:pointer;text-decoration:none}
+  .btn-primary{background:#10b981;color:#fff}
+  .btn-secondary{background:#e5e7eb;color:#111827}
+</style>
+{% endblock %}
+
+{% block content %}
+<nav style="margin-bottom:12px">
+  <a class="btn btn-secondary" href="{% url 'solicitud_adopcion:lista_solicitudes' %}">← Volver a mis solicitudes</a>
+</nav>
+
+<div class="sd-wrap">
+  <aside class="sd-card">
+    <div class="sd-media">
+      {% if solicitud.mascota.foto %}
+        <img src="{{ solicitud.mascota.foto.url }}" alt="{{ solicitud.mascota.nombre }}">
+      {% else %}
+        <img src="{% static 'img/placeholder_pet.jpg' %}" alt="Mascota">
+      {% endif %}
+    </div>
+    <div class="sd-body">
+      <div class="sd-title">{{ solicitud.mascota.nombre }}</div>
+      <div class="sd-meta">{{ solicitud.mascota.get_tipo_display }} • {{ solicitud.mascota.edad }} meses • {{ solicitud.mascota.get_sexo_display }}</div>
+    </div>
+  </aside>
+
+  <section class="sd-card">
+    <div class="sd-body">
+      <h1 style="margin:0 0 8px">Solicitud #{{ solicitud.id }}</h1>
+
+      <p class="sd-meta" style="margin:0 0 10px">
+        Enviada: {{ solicitud.fecha_solicitud|date:"d M Y H:i" }}
+      </p>
+
+      <div style="margin-bottom:10px">
+        {% if solicitud.estado == 'aprobada' %}
+          <span class="sd-badge sd-ok">Aprobada</span>
+        {% elif solicitud.estado == 'rechazada' %}
+          <span class="sd-badge sd-no">Rechazada</span>
+        {% else %}
+          <span class="sd-badge sd-pend">Pendiente</span>
+        {% endif %}
+      </div>
+
+      <h3 style="margin:10px 0 6px">Tu mensaje</h3>
+      <div class="sd-msg">{{ solicitud.mensaje|default:"(Sin mensaje)" }}</div>
+
+      {% if solicitud.respuesta %}
+        <h3 style="margin:14px 0 6px">Respuesta del responsable</h3>
+        <div class="sd-msg">{{ solicitud.respuesta }}</div>
+      {% endif %}
+
+      <div class="sd-actions">
+        <a class="btn btn-primary" href="{% url 'home' %}">Seguir explorando mascotas</a>
+      </div>
+    </div>
+  </section>
+</div>
+{% endblock %}

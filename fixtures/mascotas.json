@@ -1,0 +1,70 @@
+[
+{
+  "model": "registro_mascotas.mascota",
+  "pk": 1,
+  "fields": {
+    "nombre": "Atlas",
+    "tipo": "otro",
+    "raza": "",
+    "edad": 24,
+    "sexo": "hembra",
+    "descripcion": "Tortuga terrestre. Activa y resistente.",
+    "ubicacion": "Santiago",
+    "foto": "",
+    "estado": "disponible",
+    "fecha_registro": "2025-09-19T21:11:27.702Z",
+    "responsable": 1
+  }
+},
+{
+  "model": "registro_mascotas.mascota",
+  "pk": 2,
+  "fields": {
+    "nombre": "David Coco Leon",
+    "tipo": "hamster",
+    "raza": "",
+    "edad": 10,
+    "sexo": "macho",
+    "descripcion": "Hámster curioso y activo.",
+    "ubicacion": "San Fernando",
+    "foto": "",
+    "estado": "disponible",
+    "fecha_registro": "2025-09-19T21:11:27.708Z",
+    "responsable": 1
+  }
+},
+{
+  "model": "registro_mascotas.mascota",
+  "pk": 3,
+  "fields": {
+    "nombre": "Sol",
+    "tipo": "ave",
+    "raza": "",
+    "edad": 8,
+    "sexo": "macho",
+    "descripcion": "Canario cantarín.",
+    "ubicacion": "Chillán",
+    "foto": "",
+    "estado": "disponible",
+    "fecha_registro": "2025-09-19T21:11:27.713Z",
+    "responsable": 1
+  }
+},
+{
+  "model": "registro_mascotas.mascota",
+  "pk": 4,
+  "fields": {
+    "nombre": "Kiwi",
+    "tipo": "ave",
+    "raza": "",
+    "edad": 8,
+    "sexo": "macho",
+    "descripcion": "Periquito sociable.",
+    "ubicacion": "Osorno",
+    "foto": "",
+    "estado": "disponible",
+    "fecha_registro": "2025-09-19T21:11:27.719Z",
+    "responsable": 1
+  }
+}
+]

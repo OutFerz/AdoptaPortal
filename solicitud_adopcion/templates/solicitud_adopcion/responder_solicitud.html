@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}{{ titulo|default:"Responder solicitud" }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .rs-card{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:18px;box-shadow:0 4px 10px rgba(0,0,0,.04)}
+  .rs-row{display:grid;grid-template-columns:320px 1fr;gap:18px}
+  @media (max-width:960px){ .rs-row{grid-template-columns:1fr} }
+  .rs-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+  .badge{display:inline-block;padding:6px 10px;border-radius:999px;font-weight:800;font-size:.85rem}
+  .b-pend{background:#fff7ed;color:#9a3412;border:1px solid #fdba74}
+  .b-ok{background:#ecfdf5;color:#065f46;border:1px solid #34d399}
+  .b-no{background:#fef2f2;color:#991b1b;border:1px solid #f87171}
+  .muted{color:#6b7280}
+  .form-row{display:grid;gap:10px;margin-top:10px}
+  textarea{min-height:120px;width:100%;padding:10px;border:1px solid #d1d5db;border-radius:10px}
+  select,button{padding:10px 14px;border-radius:10px;border:1px solid #d1d5db}
+  .btn-primary{background:#10b981;border:0;color:#fff;font-weight:700;cursor:pointer}
+</style>
+{% endblock %}
+
+{% block content %}
+<nav style="margin-bottom:12px">
+  <a href="{% url 'home' %}" class="muted">← Volver al inicio</a>
+</nav>
+
+<div class="rs-row">
+  <aside class="rs-card">
+    <h3 style="margin:0 0 6px">{{ solicitud.mascota.nombre }}</h3>
+    <div class="muted">{{ solicitud.mascota.get_tipo_display }} • {{ solicitud.mascota.edad }} meses • {{ solicitud.mascota.get_sexo_display }}</div>
+    <hr style="margin:12px 0;border:0;border-top:1px solid #e5e7eb">
+    <div class="muted">Solicitante: <strong>{{ solicitud.usuario.username }}</strong></div>
+    <div class="muted">Fecha: {{ solicitud.fecha_solicitud|date:"d M Y H:i" }}</div>
+  </aside>
+
+  <section class="rs-card">
+    <div class="rs-head">
+      <h1 style="margin:0">Responder solicitud #{{ solicitud.id }}</h1>
+      {% if solicitud.estado == 'aprobada' %}
+        <span class="badge b-ok">Aprobada</span>
+      {% elif solicitud.estado == 'rechazada' %}
+        <span class="badge b-no">Rechazada</span>
+      {% else %}
+        <span class="badge b-pend">Pendiente</span>
+      {% endif %}
+    </div>
+
+    <p class="muted" style="margin:0 0 10px">Mensaje del solicitante:</p>
+    <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:12px;margin-bottom:12px">
+      {{ solicitud.mensaje|default:"(Sin mensaje)" }}
+    </div>
+
+    <form method="post">
+      {% csrf_token %}
+      <div class="form-row">
+        <label for="estado" class="muted">Estado</label>
+        <select id="estado" name="estado" required>
+          <option value="aprobada">Aprobar</option>
+          <option value="rechazada">Rechazar</option>
+        </select>
+
+        <label for="respuesta" class="muted">Mensaje para el solicitante (opcional)</label>
+        <textarea id="respuesta" name="respuesta" placeholder="Escribe una respuesta o el motivo del rechazo…">{{ solicitud.respuesta }}</textarea>
+
+        <div style="display:flex;gap:10px">
+          <button class="btn-primary" type="submit">Guardar respuesta</button>
+          <a class="muted" href="{% url 'solicitud_adopcion:detalle_solicitud' solicitud.id %}">Ver detalle</a>
+        </div>
+      </div>
+    </form>
+  </section>
+</div>
+{% endblock %}
